@@ -28,8 +28,9 @@ class Lobby {
   }
 
   getInfo() {
+    const [leaderId, leaderUsername] = Object.entries(this.connected)[0];
     return {
-      lobbyLeader: connectedPlayers[0],
+      lobbyLeader: { id: leaderId, username: leaderUsername },
       connectedPlayers: Object.keys(this.connected).map(id => ({
         id, username: this.connected[id],
       })),
@@ -49,7 +50,6 @@ class LobbyService {
     return id;
   }
 }
-
 
 module.exports = function createLobbyService (io) {
   return new LobbyService(io);
