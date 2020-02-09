@@ -4,7 +4,6 @@ class Lobby {
   constructor(namespace) {
     this.namespace = namespace;
     this.connected = {}
-    this.leaderId = undefined;
 
     this.namespace.on('connection', (s) => this.onUserConnected(s));
   }
@@ -28,13 +27,17 @@ class Lobby {
   }
 
   getInfo() {
-    const [leaderId, leaderUsername] = Object.entries(this.connected)[0];
     return {
-      lobbyLeader: { id: leaderId, username: leaderUsername },
+      lobbyLeader: this.getLeader(),
       connectedPlayers: Object.keys(this.connected).map(id => ({
         id, username: this.connected[id],
       })),
     }
+  }
+
+  getLeader() {
+    const leaderId = Object.keys(this.connected)[0];
+    return { id: leaderId, username: this.connected[leaderId] };
   }
 }
 
