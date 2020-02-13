@@ -10,7 +10,7 @@ class Lobby {
 
   handleAddConnection(socket) {
     const { username } = socket.handshake.query;
-    this.connected[socket.id] = username;
+    username && (this.connected[socket.id] = username);
     const lobbyInfo = this.getInfo();
     this.namespace.emit('lobby info', lobbyInfo);
   }
@@ -22,9 +22,10 @@ class Lobby {
 
   handleRemoveConnection(socket) {
     delete this.connected[socket.id];
-    if (this.isEmpty()) {
-      return this.onEmpty();
-    } 
+    
+    // if (this.isEmpty())
+    //   return this.onEmpty();
+
     const lobbyInfo = this.getInfo();
     this.namespace.emit('lobby info', lobbyInfo);
   }
