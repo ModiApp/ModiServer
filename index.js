@@ -16,4 +16,9 @@ app.get('/lobbies/new', (req, res) => {
   res.json({ lobbyId });
 });
 
+app.get('/lobbies/:id', (req, res) => {
+  const lobby = LobbyService.findById(req.params.id);
+  res.json({ lobby });
+});
+
 server.listen(PORT || 5000);

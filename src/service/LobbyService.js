@@ -65,6 +65,10 @@ class LobbyService {
   removeLobby(id) {
     delete this.lobbies[id];
   }
+
+  findById(id) {
+    return this.lobbies[id];
+  }
 }
 
 module.exports = function createLobbyService (io) {
