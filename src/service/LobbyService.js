@@ -67,7 +67,7 @@ class LobbyService {
   }
 
   findById(id) {
-    return this.lobbies[id];
+    return this.lobbies[id].getInfo();
   }
 }
 

@@ -11,6 +11,9 @@ const io = socketio(server);
 
 const LobbyService = createLobbyService(io);
 
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+
 app.get('/lobbies/new', (req, res) => {
   const lobbyId = LobbyService.createLobby();
   res.json({ lobbyId });
