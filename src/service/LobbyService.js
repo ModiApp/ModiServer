@@ -1,10 +1,9 @@
 const { uniqueId } = require('../util');
 
 class Lobby {
-  constructor(namespace, onEmpty) {
+  constructor(namespace) {
     this.namespace = namespace;
     this.connected = {}
-    this.onEmpty = onEmpty;
     this.namespace.on('connection', (s) => this.onUserConnected(s));
   }
 
@@ -22,9 +21,6 @@ class Lobby {
 
   handleRemoveConnection(socket) {
     delete this.connected[socket.id];
-    
-    // if (this.isEmpty())
-    //   return this.onEmpty();
 
     const lobbyInfo = this.getInfo();
     this.namespace.emit('lobby info', lobbyInfo);
@@ -57,8 +53,7 @@ class LobbyService {
 
   createLobby() {
     const id = uniqueId(Object.keys(this.lobbies));
-    const onEmpty = () => this.removeLobby(id);
-    this.lobbies[id] = new Lobby(this.io.of(`/lobbies/${id}`, onEmpty));
+    this.lobbies[id] = new Lobby(this.io.of(`/lobbies/${id}`));
     return id;
   }
 
@@ -67,7 +62,7 @@ class LobbyService {
   }
 
   findById(id) {
-    return this.lobbies[id].getInfo();
+    return this.lobbies[id] && this.lobbies[id].getInfo();
   }
 }
 
