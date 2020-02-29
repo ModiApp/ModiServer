@@ -2,11 +2,11 @@ export enum Suit {
   Spades,
   Hearts,
   Clubs,
-  Diamonds,
+  Diamonds
 }
 
 export enum Rank {
-  Ace,
+  Ace = 1,
   Two,
   Three,
   Four,
@@ -18,9 +18,10 @@ export enum Rank {
   Ten,
   Jack,
   Queen,
-  King,
+  King
 }
 
+// TODO: I think this is unnecessary
 export const ranks: Rank[] = [
   Rank.Ace,
   Rank.Two,
@@ -34,14 +35,15 @@ export const ranks: Rank[] = [
   Rank.Ten,
   Rank.Jack,
   Rank.Queen,
-  Rank.King,
+  Rank.King
 ];
 
+// TODO: Also unnecessary
 export const suits: Suit[] = [
   Suit.Spades,
   Suit.Hearts,
   Suit.Clubs,
-  Suit.Diamonds,
+  Suit.Diamonds
 ];
 
 class Card {
