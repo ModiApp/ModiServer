@@ -10,7 +10,7 @@ type GameId = string;
 
 interface ModiGameService {
   gameServers: Map<GameId, ModiGameServer>;
-  createGameServer(numPlayers: number): ModiGameServer;
+  createGameServer(numPlayers: number): GameId;
 }
 class ModiGameService implements ModiGameService {
   private io: SocketIO.Server;
@@ -26,7 +26,11 @@ class ModiGameService implements ModiGameService {
     const nsp = this.io.of(`/games/${id}`);
     const gameServer = new ModiGameServer(nsp, numPlayers);
     this.gameServers.set(id, gameServer);
-    return gameServer;
+    return id;
+  }
+
+  findGameServerById(id) {
+    return this.gameServers.get(id);
   }
 }
 
@@ -41,6 +45,11 @@ class ModiGameServer {
   constructor(nsp: SocketIO.Namespace, numPlayers: number) {
     this.authorizedPlayerIds = uniqueIds(numPlayers, 10);
     this.namespace = nsp;
+    nsp.on("connect", this.onConnect);
+  }
+
+  onConnect(socket) {
+    socket.on("disconnect", () => {});
   }
 
   getAuthorizedPlayerIds() {

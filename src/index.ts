@@ -18,11 +18,11 @@ app.use(express.urlencoded({ extended: false }));
 
 const zip = (arr1, arr2) => arr1.map((el, i) => [el, arr2[i]]);
 
-// Lobby Service MVP
+// Lobby Controller MVP
 (() => {
   const lobbyIds = [];
   app.get("/lobbies/new", (req, res) => {
-    const lobbyId = uniqueId(lobbyIds, 6);
+    const lobbyId = uniqueId(lobbyIds, 3);
     const nsp = io.of("/lobbies/" + lobbyId);
 
     const getConnected = () =>
@@ -35,44 +35,69 @@ const zip = (arr1, arr2) => arr1.map((el, i) => [el, arr2[i]]);
 
     const sendStatus = () => {
       const connected = getConnected();
-      nsp.emit("lobbyInfo", {
+      nsp.emit("lobby info", {
         connections: connected,
         lobbyLeader: connected[0]
       });
     };
 
-    const removeNsp = () => {
-      nsp.removeAllListeners();
-      delete io.nsps["/lobbies/" + lobbyId];
-    };
+    const removeNsp = (() => {
+      let isAlreadyScheduledForRemoval = false;
+
+      const remove = () => {
+        if (isLobbyEmpty()) {
+          nsp.removeAllListeners();
+          delete io.nsps["/lobbies/" + lobbyId];
+          lobbyIds.splice(lobbyIds.findIndex(id => id === lobbyId));
+        } else {
+          isAlreadyScheduledForRemoval = false;
+        }
+      };
+
+      return () => {
+        if (!isAlreadyScheduledForRemoval) {
+          setTimeout(remove, 1000 * 60 * 5); // wait five min before removing
+          isAlreadyScheduledForRemoval = true;
+        }
+      };
+    })();
+
+    const isLobbyEmpty = () => !Object.values(nsp.connected).length;
 
     nsp.on("connect", socket => {
       sendStatus();
       socket.on("disconnect", () => {
-        sendStatus();
-        !Object.values(nsp.connected).length && removeNsp();
+        isLobbyEmpty() ? removeNsp() : sendStatus();
       });
       socket.on("start", () => {
-        const gameServer = GameService.createGameServer(getConnected().length);
+        const gameId = GameService.createGameServer(getConnected().length);
+        const gameServer = GameService.findGameServerById(gameId);
         const authorizedPlayerIds = gameServer.getAuthorizedPlayerIds();
 
-        zip(Object.entries(nsp.connected), authorizedPlayerIds).forEach(
-          (socket, playerId) => {
-            socket.send("event started", {
-              nsp: gameServer.getNamespaceName(),
-              playerId
+        zip(Object.values(nsp.connected), authorizedPlayerIds).forEach(
+          ([socket, authorizedPlayerId]) => {
+            socket.emit("event started", {
+              eventId: gameId,
+              authorizedPlayerId
             });
           }
         );
       });
     });
+
+    lobbyIds.push(lobbyId);
     res.json({ lobbyId });
+  });
+
+  app.get("/lobbies/:id/check-existence", (req, res) => {
+    res.json({ exists: lobbyIds.includes(req.params.id) });
   });
 })();
 
-// app.get("/lobbies/:id", (req, res) => {
-//   const lobby = LobbyService.findById(req.params.id);
-//   res.json({ lobby });
-// });
+// Game service MVP:
+app.get("/games/:id/check-existence", (req, res) => {
+  const exists = GameService.gameServers.has(req.params.id);
+  res.json({ exists });
+});
 
 server.listen(process.env.PORT || 5000);
