@@ -16,16 +16,18 @@ const GameService = createGameService(io);
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-const zip = (arr1, arr2) => arr1.map((el, i) => [el, arr2[i]]);
+const zip = (arr1: unknown[], arr2: unknown[]): unknown[] => {
+  return arr1.map((el, i) => [el, arr2[i]]);
+};
 
 // Lobby Controller MVP
-(() => {
+((): void => {
   const lobbyIds = [];
   app.get("/lobbies/new", (req, res) => {
     const lobbyId = uniqueId(lobbyIds, 3);
     const nsp = io.of("/lobbies/" + lobbyId);
 
-    const getConnected = () =>
+    const getConnected = (): object[] =>
       Object.entries(nsp.connected)
         .map(([id, socket]) => ({
           id,
@@ -33,7 +35,7 @@ const zip = (arr1, arr2) => arr1.map((el, i) => [el, arr2[i]]);
         }))
         .filter(username => !!username);
 
-    const sendStatus = () => {
+    const sendStatus = (): void => {
       const connected = getConnected();
       nsp.emit("lobby info", {
         connections: connected,
@@ -41,10 +43,12 @@ const zip = (arr1, arr2) => arr1.map((el, i) => [el, arr2[i]]);
       });
     };
 
-    const removeNsp = (() => {
+    const isLobbyEmpty = (): boolean => !Object.values(nsp.connected).length;
+
+    const removeNsp = ((): (() => void) => {
       let isAlreadyScheduledForRemoval = false;
 
-      const remove = () => {
+      const remove = (): void => {
         if (isLobbyEmpty()) {
           nsp.removeAllListeners();
           delete io.nsps["/lobbies/" + lobbyId];
@@ -54,15 +58,13 @@ const zip = (arr1, arr2) => arr1.map((el, i) => [el, arr2[i]]);
         }
       };
 
-      return () => {
+      return (): void => {
         if (!isAlreadyScheduledForRemoval) {
           setTimeout(remove, 1000 * 60 * 5); // wait five min before removing
           isAlreadyScheduledForRemoval = true;
         }
       };
     })();
-
-    const isLobbyEmpty = () => !Object.values(nsp.connected).length;
 
     nsp.on("connect", socket => {
       sendStatus();
