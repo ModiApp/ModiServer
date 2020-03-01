@@ -1,4 +1,15 @@
 import ModiGame from "./ModiGame";
-import Player from "./Player";
+import Player, { PlayerController } from "./Player";
 
-export { ModiGame, Player };
+function createModiGame(players: Player[]): ModiGame {
+    return new ModiGame(players);
+}
+
+function createModiPlayer(username: string, playerId: string, controller: PlayerController): Player {
+    return new Player(username, playerId, controller);
+}
+
+export {
+    createModiGame,
+    createModiPlayer,
+};
