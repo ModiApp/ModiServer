@@ -1,14 +1,20 @@
+import { OnChange } from "property-watch-decorator";
+
 import { EventEmitter } from "events";
 
 import { ranks } from "./Card";
 import Deck from "./Deck";
 import Player from "./Player";
 
+type ModiGameStatus = {
+  players: Player[];
+};
+
 class ModiGame extends EventEmitter {
   public static Events = {
     DealtCards: "DealtCards",
     GameInfo: "GameInfo",
-    GameStatus: "GameStatus",
+    GameStateChanged: "game state changed",
     PlayerBeginingTurn: "a player starts their turn",
     PlayerHitDeck: "a player hit the deck",
     PlayerTraded: "a player is trading cards with another player",
@@ -18,9 +24,17 @@ class ModiGame extends EventEmitter {
     UpdatedPlayers: "UpdatedPlayers"
   };
 
-  public deck: Deck;
-  public players: Player[];
-  public playersAlive: Player[];
+  private playersAlive: Player[];
+  private gameState: object;
+
+  @OnChange("updateGameState")
+  private deck: Deck;
+
+  @OnChange("updateGameState")
+  private players: Player[];
+
+  @OnChange("updateGameState")
+  private activePlayer: Player | undefined;
 
   constructor(players: Player[]) {
     super();
@@ -30,14 +44,19 @@ class ModiGame extends EventEmitter {
     this.deck = new Deck();
     this.deck.shuffle();
 
-    this.emitGameStatus();
+    this.updateGameState();
   }
 
-  public emitGameStatus() {
-    this.emit(ModiGame.Events.GameStatus, {
-      cards: this.deck.cards,
-      players: this.players
+  private updateGameState(): object {
+    return (this.gameState = {
+      players: this.players,
+      activePlayerId: this.activePlayer.id,
+      cardsInDeck: this.deck.cards
     });
+  }
+
+  private emitGameState(): void {
+    this.emit(ModiGame.Events.GameStateChanged, this.gameState);
   }
 
   public async start(): Promise<void> {
@@ -102,7 +121,7 @@ class ModiGame extends EventEmitter {
     this.emit(ModiGame.Events.PlayerTraded, { fromPlayer, toPlayer });
   }
 
-  private handleHitDeck(player: Player) {
+  private handleHitDeck(player: Player): void {
     this.deck.addToTrash(player.removeCard());
     player.recieveCard(this.deck.dealCard());
     this.emit(ModiGame.Events.PlayerHitDeck, player);
@@ -118,7 +137,7 @@ class ModiGame extends EventEmitter {
     players.forEach((player: Player) => {
       const indOfGroup = player.card.value() - 1;
       if (!rankedGroups[indOfGroup]) {
-        rankedGroups[indOfGroup] = Array();
+        rankedGroups[indOfGroup] = [];
       }
       rankedGroups[indOfGroup].push(player);
     });

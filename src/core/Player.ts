@@ -1,8 +1,9 @@
 import Card from "./Card";
 
-export interface IPlayerController {
+type PlayerId = string;
+export interface PlayerController {
   getMove(): Promise<PlayerMove>;
-  chooseDealer(): Promise<Player>;
+  chooseDealer(): Promise<PlayerId>;
 }
 
 export enum PlayerMove {
@@ -13,13 +14,15 @@ export enum PlayerMove {
 export default class Player {
   public username: string;
   public lives: number;
-  public controller: IPlayerController;
+  public id: string;
+  public controller: PlayerController;
   public card?: Card;
 
-  constructor(name: string, controller: IPlayerController) {
+  constructor(name: string, id: string, controller: PlayerController) {
     this.controller = controller;
     this.username = name;
     this.lives = 3;
+    this.id = id;
   }
 
   public wantsToSwap(): Promise<boolean> {
@@ -47,10 +50,10 @@ export default class Player {
     return card;
   }
 
-  public loseLife() {
+  public loseLife(): void {
     this.lives -= 1;
   }
-  public chooseDealer(): Promise<Player> {
+  public chooseDealer(): Promise<PlayerId> {
     return this.controller.chooseDealer();
   }
 }
