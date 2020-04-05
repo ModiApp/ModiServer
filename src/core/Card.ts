@@ -1,51 +1,26 @@
-export enum Suit {
-  Spades,
-  Hearts,
-  Clubs,
-  Diamonds
-}
-
-export enum Rank {
-  Ace = 1,
-  Two,
-  Three,
-  Four,
-  Five,
-  Six,
-  Seven,
-  Eight,
-  Nine,
-  Ten,
-  Jack,
-  Queen,
-  King
-}
-
-// TODO: I think this is unnecessary
 export const ranks: Rank[] = [
-  Rank.Ace,
-  Rank.Two,
-  Rank.Three,
-  Rank.Four,
-  Rank.Five,
-  Rank.Six,
-  Rank.Seven,
-  Rank.Eight,
-  Rank.Nine,
-  Rank.Ten,
-  Rank.Jack,
-  Rank.Queen,
-  Rank.King
+  1,
+  2,
+  3,
+  4,
+  5,
+  6,
+  7,
+  8,
+  9,
+  10,
+  11,
+  12,
+  13
 ];
 
 // TODO: Also unnecessary
 export const suits: Suit[] = [
-  Suit.Spades,
-  Suit.Hearts,
-  Suit.Clubs,
-  Suit.Diamonds
+  0,
+  1,
+  2,
+  3
 ];
-
 class Card {
   public rank: Rank;
   public suit: Suit;
@@ -56,7 +31,7 @@ class Card {
   }
 
   public value(): number {
-    return this.rank + 1;
+    return this.rank;
   }
 }
 

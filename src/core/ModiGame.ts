@@ -1,14 +1,6 @@
-import { OnChange } from "property-watch-decorator";
-
 import { EventEmitter } from "events";
-
-import { ranks } from "./Card";
-import Deck from "./Deck";
-import Player from "./Player";
-
-type ModiGameStatus = {
-  players: Player[];
-};
+import { OnChange } from "property-watch-decorator";
+import createDeckOfCards from './Deck';
 
 class ModiGame extends EventEmitter {
   public static Events = {
@@ -24,38 +16,46 @@ class ModiGame extends EventEmitter {
     UpdatedPlayers: "UpdatedPlayers"
   };
 
-  private playersAlive: Player[];
-  private gameState: object;
+  playersAlive: ModiPlayer[];
 
-  @OnChange("updateGameState")
-  private deck: Deck;
+  //@OnChange("emitGameState")
+  gameState: ModiGameState;
 
-  @OnChange("updateGameState")
-  private players: Player[];
+  //@OnChange("updateGameState")
+  deck: DeckOfCards;
 
-  @OnChange("updateGameState")
-  private activePlayer: Player | undefined;
+  //@OnChange("updateGameState")
+  players: ModiPlayer[];
 
-  constructor(players: Player[]) {
+  //@OnChange("updateGameState")
+  activePlayer: ModiPlayer | undefined;
+
+  constructor(players: ModiPlayer[]) {
     super();
-
+  
     this.players = players;
     this.playersAlive = players;
-    this.deck = new Deck();
-    this.deck.shuffle();
+    this.activePlayer = undefined;
 
+    this.deck = createDeckOfCards();
+    this.deck.shuffle();
+    
     this.updateGameState();
   }
 
-  private updateGameState(): object {
+  public getGameState(): ModiGameState {
+    return this.gameState;
+  }
+
+  public updateGameState(): ModiGameState {
     return (this.gameState = {
       players: this.players,
-      activePlayerId: this.activePlayer.id,
+      activePlayerId: this.activePlayer?.id,
       cardsInDeck: this.deck.cards
     });
   }
 
-  private emitGameState(): void {
+  public emitGameState(): void {
     this.emit(ModiGame.Events.GameStateChanged, this.gameState);
   }
 
@@ -69,7 +69,7 @@ class ModiGame extends EventEmitter {
     }
   }
 
-  public async playRound() {
+  public async playRound(): Promise<void> {
     this.clearPlayerCards();
     this.giveEachPlayerACard();
     for (let i = 0; i < this.playersAlive.length - 1; i++) {
@@ -86,14 +86,15 @@ class ModiGame extends EventEmitter {
     }
 
     const losers = this.rankPlayersByCards().pop();
-    losers.forEach((loser: Player) => loser.loseLife());
+    losers.forEach((loser: ModiPlayer) => loser.loseLife());
 
     this.playersAlive.unshift(this.playersAlive.pop());
     this.playersAlive.filter(p => p.lives);
   }
 
-  public playHighCard(players = this.playersAlive): Player {
+  public playHighCard(players = this.playersAlive): ModiPlayer {
     this.emit(ModiGame.Events.StartingHighcard, players);
+    this.clearPlayerCards(this.players);
     this.giveEachPlayerACard(players);
     const [winners, ...groupedLosers] = this.rankPlayersByCards();
     if (winners.length > 1) {
@@ -102,8 +103,8 @@ class ModiGame extends EventEmitter {
     return winners[0];
   }
 
-  public clearPlayerCards() {
-    this.players.forEach((player: Player) => {
+  public clearPlayerCards(players = this.playersAlive) {
+    players.forEach((player: ModiPlayer) => {
       const cardToTrash = player.removeCard();
       if (cardToTrash) {
         this.deck.addToTrash(cardToTrash);
@@ -116,25 +117,25 @@ class ModiGame extends EventEmitter {
     return this.playersAlive.length > 1;
   }
 
-  private handleCardSwap(fromPlayer, toPlayer) {
+  public handleCardSwap(fromPlayer: ModiPlayer, toPlayer: ModiPlayer): void {
     fromPlayer.tradeCardsWith(toPlayer);
     this.emit(ModiGame.Events.PlayerTraded, { fromPlayer, toPlayer });
   }
 
-  private handleHitDeck(player: Player): void {
+  public handleHitDeck(player: ModiPlayer): void {
     this.deck.addToTrash(player.removeCard());
     player.recieveCard(this.deck.dealCard());
     this.emit(ModiGame.Events.PlayerHitDeck, player);
   }
 
-  private giveEachPlayerACard(players = this.playersAlive): void {
-    players.forEach((p: Player) => p.recieveCard(this.deck.dealCard()));
+  public giveEachPlayerACard(players = this.playersAlive): void {
+    players.forEach((p: ModiPlayer) => p.recieveCard(this.deck.dealCard()));
     this.emit(ModiGame.Events.DealtCards, players);
   }
 
-  private rankPlayersByCards(players = this.playersAlive): Player[][] {
-    let rankedGroups = Array(ranks.length);
-    players.forEach((player: Player) => {
+  public rankPlayersByCards(players = this.playersAlive): ModiPlayer[][] {
+    let rankedGroups = Array(13);
+    players.forEach((player: ModiPlayer) => {
       const indOfGroup = player.card.value() - 1;
       if (!rankedGroups[indOfGroup]) {
         rankedGroups[indOfGroup] = [];
@@ -147,4 +148,8 @@ class ModiGame extends EventEmitter {
   }
 }
 
-export default ModiGame;
+function createModiGame(players: ModiPlayer[]): ModiGame {
+  return new ModiGame(players);
+}
+
+export default createModiGame;

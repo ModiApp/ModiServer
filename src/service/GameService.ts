@@ -5,8 +5,7 @@
 
 import { createModiGame, createModiPlayer } from "../core";
 import { uniqueId, uniqueIds } from "../util";
-import Player, { PlayerMove } from "../core/Player";
-import ModiGame from "../core/ModiGame";
+// import ModiGame from "../core/ModiGame";
 
 class ModiGameServer {
   private nsp: SocketIO.Namespace;
@@ -21,12 +20,12 @@ class ModiGameServer {
     );
     this.nsp = nsp;
     this.game = undefined;
-    nsp.on("connect", this.onConnect);
+    nsp.on("connect", this.onConnect.bind(this));
   }
 
   onConnect(socket: SocketIO.Socket): void {
     const { authorizedPlayerId } = socket.handshake.query;
-    if (this.authorizedPlayerIds.includes(authorizedPlayerId)) {
+    if (!this.authorizedPlayerIds.includes(authorizedPlayerId)) {
       return; // we dont care about this lerker
     }
     this.authorizedConnections.set(authorizedPlayerId, socket);
@@ -45,15 +44,15 @@ class ModiGameServer {
     });
   }
 
-  getAuthorizedPlayerIds() {
+  getAuthorizedPlayerIds(): string[] {
     return this.authorizedPlayerIds;
   }
 
-  getNamespaceName() {
+  getNamespaceName(): string {
     return this.nsp.name;
   }
 
-  sendGameState() {
+  sendGameState(): void {
     this.nsp.emit("updated game state", {
       waitingForPlayers: this.game === undefined,
       connectedPlayers: Object.values(this.authorizedConnections)
@@ -66,31 +65,28 @@ class ModiGameServer {
   }
 
   private createGameInstance(): void {
-    const createPlayer = ({ username, authorizedPlayerId }): Player => {
+    const createPlayer = ({ username, authorizedPlayerId }): ModiPlayer => {
       return createModiPlayer(username, authorizedPlayerId, {
         getMove: () =>
-          new Promise(res => {
+          new Promise<PlayerMove>(res => {
             const currConn = this.authorizedConnections[authorizedPlayerId];
-            currConn.on("move", (move: PlayerMove) => res(move));
+            currConn.on("move", (move) => res(move));
           }),
         chooseDealer: () =>
-          new Promise(res => {
+          new Promise<PlayerId>(res => {
             const currConn = this.authorizedConnections[authorizedPlayerId];
             currConn.on("dealerId", (dealersId: string) => res(dealersId));
           })
       });
     };
     const modiPlayers = Object.values(this.nsp.connected).map(
-      (s: SocketIO.Socket) => {
-        return createPlayer(s.handshake.query);
-      }
-    );
+      (s: SocketIO.Socket) => createPlayer(s.handshake.query));
     this.game = createModiGame(modiPlayers);
     this.listenForGameEvents();
   }
 
-  private listenForGameEvents() {
-    this.game.on(ModiGame.Events.DealtCards, () => {
+  private listenForGameEvents(): void {
+    this.game.on('dealt cards', () => {
       this.nsp.emit("dealt cards");
     });
   }
@@ -111,7 +107,7 @@ class ModiGameService implements ModiGameService {
     this.gameServers = new Map();
   }
 
-  createGameServer(numPlayers: number) {
+  createGameServer(numPlayers: number): GameId {
     const id = uniqueId(Array.from(this.gameServers.keys()));
     const nsp = this.io.of(`/games/${id}`);
     const gameServer = new ModiGameServer(nsp, numPlayers);
@@ -119,7 +115,7 @@ class ModiGameService implements ModiGameService {
     return id;
   }
 
-  findGameServerById(id) {
+  findGameServerById(id): ModiGameServer {
     return this.gameServers.get(id);
   }
 }

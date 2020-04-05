@@ -1,9 +1,14 @@
-import Player from "../../src/core/Player";
-import Card, { Rank, Suit } from "../../src/core/Card";
+import createModiPlayer from "../../src/core/Player";
+import Card from '../../src/core/Card';
+
+const createMockPlayer = (name?) => createModiPlayer(name || 'ikey', '1', {
+  getMove: () => new Promise<PlayerMove>(r => r(Math.random() > 0.5 ? 'stick': 'swap')),
+  chooseDealer: () => new Promise<PlayerId>(r => r('1')),
+});
 
 describe("Player() unit tests:", () => {
   describe("Player.constructor", () => {
-    const p = new Player("ikey");
+    const p = createMockPlayer();
     test("player has correct username property", () => {
       expect(p).toHaveProperty("username");
       expect(p.username).toBe("ikey");
@@ -16,8 +21,8 @@ describe("Player() unit tests:", () => {
   });
 
   describe("Player.recieveCard", () => {
-    const p = new Player("ikey");
-    const pCard = new Card(Suit.Spades, Rank.King);
+    const p = createMockPlayer();
+    const pCard = new Card('spades', 13);
 
     test("players card property gets set properly", () => {
       expect(p).not.toHaveProperty("card");
@@ -35,9 +40,9 @@ describe("Player() unit tests:", () => {
     });
   });
 
-  describe("Player.removeCard", () => {
-    const p = new Player("ikey");
-    const pCard = new Card(Suit.Spades, Rank.King);
+  describe("ModiPlayer.removeCard", () => {
+    const p = createMockPlayer();
+    const pCard = new Card('spades', 1);
     p.recieveCard(pCard);
 
     test("player no longer has card property", () => {
@@ -47,12 +52,12 @@ describe("Player() unit tests:", () => {
       expect(p.card).toBe(undefined);
     });
   });
-  describe("Player.tradeCardsWith", () => {
-    const p1 = new Player("ikey");
-    const p2 = new Player("jake");
+  describe("ModiPlayer.tradeCardsWith", () => {
+    const p1 = createMockPlayer();
+    const p2 = createMockPlayer('jake');
 
-    const p1Card = new Card(Suit.Spades, Rank.Ace);
-    const p2Card = new Card(Suit.Hearts, Rank.Queen);
+    const p1Card = new Card('spades', 1);
+    const p2Card = new Card('hearts', 12);
 
     p1.recieveCard(p1Card);
     p2.recieveCard(p2Card);
@@ -71,7 +76,7 @@ describe("Player() unit tests:", () => {
   });
 
   describe("Player.loseLife", () => {
-    const p = new Player("ikey");
+    const p = createMockPlayer();
     test("lives property decriments", () => {
       const lives = p.lives;
       p.loseLife();

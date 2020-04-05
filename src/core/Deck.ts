@@ -1,8 +1,8 @@
-import Card, { Rank, ranks, Suit, suits } from "./Card";
+import Card, { suits, ranks } from './Card';
 
-class Deck {
+class Deck implements DeckOfCards {
   public cards: Card[];
-  private trash: Card[];
+  public trash: Card[];
 
   constructor() {
     this.cards = [];
@@ -50,4 +50,8 @@ class Deck {
   }
 }
 
-export default Deck;
+function createDeckOfCards(): DeckOfCards {
+  return new Deck();
+}
+
+export default createDeckOfCards;

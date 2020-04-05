@@ -2,7 +2,6 @@ import express from "express";
 import socketio from "socket.io";
 import http from "http";
 
-// import createLobbyService from "./service/LobbyService";
 import createGameService from "./service/GameService";
 import { uniqueId } from "./util";
 
@@ -10,7 +9,6 @@ const app = express();
 const server = http.createServer(app);
 const io = socketio(server);
 
-// const LobbyService = createLobbyService(io);
 const GameService = createGameService(io);
 
 app.use(express.json());
@@ -27,7 +25,7 @@ const zip = (arr1: unknown[], arr2: unknown[]): unknown[] => {
     const lobbyId = uniqueId(lobbyIds, 3);
     const nsp = io.of("/lobbies/" + lobbyId);
 
-    const getConnected = (): object[] =>
+    const getConnected = (): { id: PlayerId; username: string }[] =>
       Object.entries(nsp.connected)
         .map(([id, socket]) => ({
           id,

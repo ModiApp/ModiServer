@@ -1,17 +1,4 @@
-import Card from "./Card";
-
-type PlayerId = string;
-export interface PlayerController {
-  getMove(): Promise<PlayerMove>;
-  chooseDealer(): Promise<PlayerId>;
-}
-
-export enum PlayerMove {
-  Stick,
-  Swap
-}
-
-export default class Player {
+class ModiPlayer {
   public username: string;
   public lives: number;
   public id: string;
@@ -26,10 +13,10 @@ export default class Player {
   }
 
   public wantsToSwap(): Promise<boolean> {
-    return this.controller.getMove().then(m => m === PlayerMove.Swap);
+    return this.controller.getMove().then((m: PlayerMove) => m === 'swap');
   }
 
-  public tradeCardsWith(other: Player): Card {
+  public tradeCardsWith(other: ModiPlayer): Card {
     const otherCard = other.card;
     other.card = this.card;
     this.card = otherCard;
@@ -37,7 +24,7 @@ export default class Player {
   }
 
   public recieveCard(card: Card): Card {
-    if (this.card instanceof Card) {
+    if (this.card !== undefined) {
       throw new Error(`${this.username} already has a card: ${this.card}`);
     }
     this.card = card;
@@ -57,3 +44,10 @@ export default class Player {
     return this.controller.chooseDealer();
   }
 }
+
+function createModiPlayer(username: string, id: PlayerId, controller: PlayerController): ModiPlayer {
+  return new ModiPlayer(username, id, controller);
+}
+
+export { ModiPlayer };
+export default createModiPlayer;

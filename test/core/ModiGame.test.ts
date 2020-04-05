@@ -1,23 +1,24 @@
-const { default: ModiGame } = require("../dist/ModiGame");
-const { default: Player, PlayerMove } = require("../dist/Player");
-const { default: Card, Suit, Rank } = require("../dist/Card");
+import createModiGame from '../../src/core/ModiGame';
+import createModiPlayer, { ModiPlayer } from '../../src/core/Player';
+import Card from '../../src/core/Card';
 
 const mockUsernames = ["Ikey", "Jake", "Louie", "Connor", "Tom"];
-const mockPlayerController = {
-  getMove() {
-    return new Promise(resolve => {
-      resolve(Math.random() > 0.5 ? PlayerMove.Swap : PlayerMove.Stick);
-    });
-  }
-};
+const mockPlayerController = (): PlayerController => ({
+  getMove: () => new Promise<PlayerMove>(resolve => {
+    resolve(Math.random() > 0.5 ?  'swap' : 'stick');
+  }),
+  chooseDealer: () => new Promise<PlayerId>(resolve => {
+    resolve(String(Math.floor(Math.random() * mockUsernames.length)));
+  }),
+});
 
 describe("ModiGame() unit tests:", () => {
-  var game;
+  let game: ModiGame;
   beforeEach(() => {
     const players = mockUsernames.map(
-      name => new Player(name, mockPlayerController)
+      (name, id) => createModiPlayer(name, String(id), mockPlayerController())
     );
-    game = new ModiGame(players);
+    game = createModiGame(players);
   });
 
   describe("ModiGame.constructor", () => {
@@ -81,7 +82,7 @@ describe("ModiGame() unit tests:", () => {
 
   describe("ModiGame.playHighCard", () => {
     test("returns a Player object", () => {
-      expect(game.playHighCard() instanceof Player).toEqual(true);
+      expect(game.playHighCard() instanceof ModiPlayer).toEqual(true);
     });
   });
 
@@ -108,11 +109,11 @@ describe("ModiGame() unit tests:", () => {
 
   describe("ModiGame.rankPlayersByCards", () => {
     test("properly ranks players by card", () => {
-      game.players[0].card = new Card(Suit.Spades, Rank.Ace);
-      game.players[1].card = new Card(Suit.Clubs, Rank.Two);
-      game.players[2].card = new Card(Suit.Diamonds, Rank.Queen);
-      game.players[3].card = new Card(Suit.Hearts, Rank.Eight);
-      game.players[4].card = new Card(Suit.Spades, Rank.Two);
+      game.players[0].recieveCard(new Card('spades', 1));
+      game.players[1].recieveCard(new Card('clubs', 2));
+      game.players[2].recieveCard(new Card('diamonds', 12));
+      game.players[3].recieveCard(new Card('hearts', 8));
+      game.players[4].recieveCard(new Card('spades', 2));
 
       const expectedOutput = [
         [game.players[2]], // First place

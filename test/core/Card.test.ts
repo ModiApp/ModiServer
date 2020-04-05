@@ -1,4 +1,4 @@
-const { default: Card, suits, ranks } = require("../dist/Card");
+import Card, { suits, ranks } from '../../src/core/Card';
 
 describe("Card() unit tests:", () => {
   describe("Card.constructor", () => {

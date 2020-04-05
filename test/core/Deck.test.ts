@@ -1,9 +1,9 @@
-const { default: Deck } = require("../dist/Deck");
-const { default: Card, suits, ranks } = require("../dist/Card");
+import createDeckOfCards from '../../src/core/Deck';
+import Card, { suits, ranks } from '../../src/core/Card';
 
 describe("Deck() unit tests:", () => {
   describe("Deck.constructor", () => {
-    const d = new Deck();
+    const d = createDeckOfCards();
     test("Deck has 52 cards", () => {
       expect(d.cards.length).toEqual(52);
     });
@@ -14,7 +14,7 @@ describe("Deck() unit tests:", () => {
 
   describe("Deck.shuffle", () => {
     test("Deck is close to fully random", () => {
-      const d = new Deck();
+      const d = createDeckOfCards();
       const places = [];
       for (let i = 0; i < suits.length; i++) {
         places.push([]);
@@ -37,7 +37,7 @@ describe("Deck() unit tests:", () => {
   });
 
   describe("Deck.addToTrash", () => {
-    const d = new Deck();
+    const d = createDeckOfCards();
     const oldTrashLength = d.trash.length;
     const cardToTrash = d.dealCard();
     d.addToTrash(cardToTrash);
@@ -51,7 +51,7 @@ describe("Deck() unit tests:", () => {
   });
 
   describe("Deck.reload", () => {
-    const d = new Deck();
+    const d = createDeckOfCards();
     const randomAmountToDeal = Math.floor(Math.random() * 52);
     const randomAmountToTrash = Math.floor(Math.random() * randomAmountToDeal);
     const dealt = [];
@@ -83,7 +83,7 @@ describe("Deck() unit tests:", () => {
   });
 
   describe("Deck.dealCard", () => {
-    const d = new Deck();
+    const d = createDeckOfCards();
     const oldTop = d.cards[d.cards.length - 1];
     const oldLength = d.cards.length;
     const card = d.addToTrash(d.dealCard());
