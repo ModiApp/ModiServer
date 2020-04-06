@@ -96,7 +96,7 @@ class ModiGame extends EventEmitter {
     this.emit(ModiGame.Events.StartingHighcard, players);
     this.clearPlayerCards(this.players);
     this.giveEachPlayerACard(players);
-    const [winners, ...groupedLosers] = this.rankPlayersByCards();
+    const [winners, ...groupedLosers] = this.rankPlayersByCards(players);
     if (winners.length > 1) {
       return this.playHighCard(winners);
     }
