@@ -16,10 +16,10 @@ export const ranks: Rank[] = [
 
 // TODO: Also unnecessary
 export const suits: Suit[] = [
-  0,
-  1,
-  2,
-  3
+  'spades',
+  'clubs',
+  'hearts',
+  'diamonds',
 ];
 class Card {
   public rank: Rank;
