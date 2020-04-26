@@ -1,4 +1,5 @@
 declare type PlayerId = string;
+declare type GameId = string;
 
 interface ModiGameState {
   players: ModiPlayer[];
@@ -11,16 +12,16 @@ declare interface PlayerController {
   chooseDealer(): Promise<PlayerId>;
 }
 
-declare type PlayerMove = 'stick' | 'swap';
+declare type PlayerMove = "stick" | "swap";
 
-declare type ModiGameEvent = 
-  | 'dealt cards'
-  | 'game info'
-  | 'players turn'
-  | 'hit deck'
-  | 'ranked players'
-  | 'trashed cards'
-  | 'updated players';
+declare type ModiGameEvent =
+  | "dealt cards"
+  | "game info"
+  | "players turn"
+  | "hit deck"
+  | "ranked players"
+  | "trashed cards"
+  | "updated players";
 
 declare class ModiGame {
   static Events: object;
@@ -38,12 +39,13 @@ declare class ModiGame {
   giveEachPlayerACard(players?: ModiPlayer[]): void;
   rankPlayersByCards(players?: ModiPlayer[]): ModiPlayer[][];
 
-  on(event: ModiGameEvent, callback: (...args: unknown[]) => void)
+  /** Overrided from EventEmitter */
+  on(event: ModiGameEvent, callback: (...args: unknown[]) => void): void;
 }
 declare class ModiPlayer {
   /** It is intended for the playerId to be passed in as a parameter. To enable whatever
-   * service program that is dealing with them to have control over their ids.
-  */
+   * service/program that is dealing with them to have control over their ids.
+   */
   constructor(name: string, id: PlayerId, controller: ModiPlayer);
   wantsToSwap(): Promise<boolean>;
   tradeCardsWith(other: ModiPlayer): Card;
@@ -61,7 +63,7 @@ declare interface PlayerController {
   chooseDealer(): Promise<PlayerId>;
 }
 
-declare type Suit = "spades" | "hearts" | "clubs" | "diamonds"
+declare type Suit = "spades" | "hearts" | "clubs" | "diamonds";
 declare type Rank =
   | 1 /* Ace */
   | 2
@@ -75,8 +77,8 @@ declare type Rank =
   | 10
   | 11 /* Jack */
   | 12 /* Queen */
-  | 13 /* King */
-  
+  | 13; /* King */
+
 declare class Card {
   suit: Suit;
   rank: Rank;
@@ -90,4 +92,11 @@ declare interface DeckOfCards {
   dealCard(): Card;
   addToTrash(card: Card): Card;
   reload(): Card[];
+}
+
+declare class ModiGameServer {
+  onConnect(socket: SocketIO.Socket): void;
+  getAuthorizedPlayerIds(): PlayerId[];
+  getNamespaceName(): string; // this.nsp.name
+  sendGameState(): void;
 }

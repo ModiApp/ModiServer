@@ -1,19 +1,19 @@
-import { EventEmitter } from "events";
-import { OnChange } from "property-watch-decorator";
+import { EventEmitter } from 'events';
+import { OnChange } from 'property-watch-decorator';
 import createDeckOfCards from './Deck';
 
 class ModiGame extends EventEmitter {
   public static Events = {
-    DealtCards: "DealtCards",
-    GameInfo: "GameInfo",
-    GameStateChanged: "game state changed",
-    PlayerBeginingTurn: "a player starts their turn",
-    PlayerHitDeck: "a player hit the deck",
-    PlayerTraded: "a player is trading cards with another player",
-    RankedPlayers: "RankedPlayers",
-    StartingHighcard: "StartingHighcard",
-    TrashedCards: "TrashedCards",
-    UpdatedPlayers: "UpdatedPlayers"
+    DealtCards: 'DealtCards',
+    GameInfo: 'GameInfo',
+    GameStateChanged: 'game state changed',
+    PlayerBeginingTurn: 'a player starts their turn',
+    PlayerHitDeck: 'a player hit the deck',
+    PlayerTraded: 'a player is trading cards with another player',
+    RankedPlayers: 'RankedPlayers',
+    StartingHighcard: 'StartingHighcard',
+    TrashedCards: 'TrashedCards',
+    UpdatedPlayers: 'UpdatedPlayers',
   };
 
   playersAlive: ModiPlayer[];
@@ -32,14 +32,14 @@ class ModiGame extends EventEmitter {
 
   constructor(players: ModiPlayer[]) {
     super();
-  
+
     this.players = players;
     this.playersAlive = players;
     this.activePlayer = undefined;
 
     this.deck = createDeckOfCards();
     this.deck.shuffle();
-    
+
     this.updateGameState();
   }
 
@@ -51,7 +51,7 @@ class ModiGame extends EventEmitter {
     return (this.gameState = {
       players: this.players,
       activePlayerId: this.activePlayer?.id,
-      cardsInDeck: this.deck.cards
+      cardsInDeck: this.deck.cards,
     });
   }
 
@@ -61,7 +61,7 @@ class ModiGame extends EventEmitter {
 
   public async start(): Promise<void> {
     if (this.players.length <= 1) {
-      throw new Error("Modi needs at least 2 people to play.");
+      throw new Error('Modi needs at least 2 people to play.');
     }
 
     while (this.noOneWonYet()) {
@@ -153,3 +153,4 @@ function createModiGame(players: ModiPlayer[]): ModiGame {
 }
 
 export default createModiGame;
+export { ModiGame };

@@ -1,22 +1,24 @@
-import createModiGame from '../../src/core/ModiGame';
-import createModiPlayer, { ModiPlayer } from '../../src/core/Player';
-import Card from '../../src/core/Card';
+import createModiGame from "../../src/core/ModiGame";
+import createModiPlayer, { ModiPlayer } from "../../src/core/Player";
+import Card from "../../src/core/Card";
 
 const mockUsernames = ["Ikey", "Jake", "Louie", "Connor", "Tom"];
 const mockPlayerController = (): PlayerController => ({
-  getMove: () => new Promise<PlayerMove>(resolve => {
-    resolve(Math.random() > 0.5 ?  'swap' : 'stick');
-  }),
-  chooseDealer: () => new Promise<PlayerId>(resolve => {
-    resolve(String(Math.floor(Math.random() * mockUsernames.length)));
-  }),
+  getMove: () =>
+    new Promise<PlayerMove>((resolve) => {
+      resolve(Math.random() > 0.5 ? "swap" : "stick");
+    }),
+  chooseDealer: () =>
+    new Promise<PlayerId>((resolve) => {
+      resolve(String(Math.floor(Math.random() * mockUsernames.length)));
+    }),
 });
 
 describe("ModiGame() unit tests:", () => {
   let game: ModiGame;
   beforeEach(() => {
-    const players = mockUsernames.map(
-      (name, id) => createModiPlayer(name, String(id), mockPlayerController())
+    const players = mockUsernames.map((name, id) =>
+      createModiPlayer(name, String(id), mockPlayerController())
     );
     game = createModiGame(players);
   });
@@ -24,7 +26,7 @@ describe("ModiGame() unit tests:", () => {
   describe("ModiGame.constructor", () => {
     test("game has correct player array of Players", () => {
       expect(Array.isArray(game.players)).toBe(true);
-      const playerNames = game.players.map(p => p.username);
+      const playerNames = game.players.map((p) => p.username);
       expect(playerNames).toEqual(mockUsernames);
     });
   });
@@ -89,7 +91,7 @@ describe("ModiGame() unit tests:", () => {
   describe("ModiGame.giveEachPlayerACard", () => {
     test("after calling every player has a card", () => {
       game.giveEachPlayerACard();
-      game.players.forEach(player => {
+      game.players.forEach((player) => {
         expect(player.card instanceof Card).toEqual(true);
       });
     });
@@ -101,7 +103,7 @@ describe("ModiGame() unit tests:", () => {
     });
     test("removes everyones cards", () => {
       game.clearPlayerCards();
-      game.players.forEach(player => {
+      game.players.forEach((player) => {
         expect(player.card).toEqual(undefined);
       });
     });
@@ -109,17 +111,17 @@ describe("ModiGame() unit tests:", () => {
 
   describe("ModiGame.rankPlayersByCards", () => {
     test("properly ranks players by card", () => {
-      game.players[0].recieveCard(new Card('spades', 1));
-      game.players[1].recieveCard(new Card('clubs', 2));
-      game.players[2].recieveCard(new Card('diamonds', 12));
-      game.players[3].recieveCard(new Card('hearts', 8));
-      game.players[4].recieveCard(new Card('spades', 2));
+      game.players[0].recieveCard(new Card("spades", 1));
+      game.players[1].recieveCard(new Card("clubs", 2));
+      game.players[2].recieveCard(new Card("diamonds", 12));
+      game.players[3].recieveCard(new Card("hearts", 8));
+      game.players[4].recieveCard(new Card("spades", 2));
 
       const expectedOutput = [
         [game.players[2]], // First place
         [game.players[3]], // Second place
         [game.players[1], game.players[4]], // Third place
-        [game.players[0]] // Fourth place
+        [game.players[0]], // Fourth place
       ];
       const actualOutput = game.rankPlayersByCards();
       expect(expectedOutput).toEqual(actualOutput);

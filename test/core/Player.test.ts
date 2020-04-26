@@ -1,10 +1,12 @@
 import createModiPlayer from "../../src/core/Player";
-import Card from '../../src/core/Card';
+import Card from "../../src/core/Card";
 
-const createMockPlayer = (name?) => createModiPlayer(name || 'ikey', '1', {
-  getMove: () => new Promise<PlayerMove>(r => r(Math.random() > 0.5 ? 'stick': 'swap')),
-  chooseDealer: () => new Promise<PlayerId>(r => r('1')),
-});
+const createMockPlayer = (name?) =>
+  createModiPlayer(name || "ikey", "1", {
+    getMove: () =>
+      new Promise<PlayerMove>((r) => r(Math.random() > 0.5 ? "stick" : "swap")),
+    chooseDealer: () => new Promise<PlayerId>((r) => r("1")),
+  });
 
 describe("Player() unit tests:", () => {
   describe("Player.constructor", () => {
@@ -22,7 +24,7 @@ describe("Player() unit tests:", () => {
 
   describe("Player.recieveCard", () => {
     const p = createMockPlayer();
-    const pCard = new Card('spades', 13);
+    const pCard = new Card("spades", 13);
 
     test("players card property gets set properly", () => {
       expect(p).not.toHaveProperty("card");
@@ -42,7 +44,7 @@ describe("Player() unit tests:", () => {
 
   describe("ModiPlayer.removeCard", () => {
     const p = createMockPlayer();
-    const pCard = new Card('spades', 1);
+    const pCard = new Card("spades", 1);
     p.recieveCard(pCard);
 
     test("player no longer has card property", () => {
@@ -54,10 +56,10 @@ describe("Player() unit tests:", () => {
   });
   describe("ModiPlayer.tradeCardsWith", () => {
     const p1 = createMockPlayer();
-    const p2 = createMockPlayer('jake');
+    const p2 = createMockPlayer("jake");
 
-    const p1Card = new Card('spades', 1);
-    const p2Card = new Card('hearts', 12);
+    const p1Card = new Card("spades", 1);
+    const p2Card = new Card("hearts", 12);
 
     p1.recieveCard(p1Card);
     p2.recieveCard(p2Card);

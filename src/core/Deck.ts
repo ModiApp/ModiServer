@@ -1,4 +1,4 @@
-import Card, { suits, ranks } from './Card';
+import Card, { ranks, suits } from "./Card";
 
 class Deck implements DeckOfCards {
   public cards: Card[];
@@ -9,7 +9,7 @@ class Deck implements DeckOfCards {
     suits.forEach((suit: Suit) =>
       ranks.forEach((rank: Rank) => {
         this.cards.push(new Card(suit, rank));
-      }),
+      })
     );
 
     this.trash = [];
@@ -30,7 +30,9 @@ class Deck implements DeckOfCards {
 
   public dealCard(): Card {
     if (!this.cards.length) {
-      if (!this.trash.length) { throw new Error("No cards left in deck"); }
+      if (!this.trash.length) {
+        throw new Error('No cards left in deck');
+      }
       this.reload();
     }
     return this.cards.pop();

@@ -1,6 +1,6 @@
 export function uniqueId(exclusions: string[] = [], len = 5): string {
   const randInt = () => Math.floor(Math.random() * 10);
-  const randInts = n => (n > 0 ? randInts(n - 1) + `${randInt()}` : "");
+  const randInts = n => (n > 0 ? randInts(n - 1) + `${randInt()}` : '');
   const id = randInts(len);
   if (exclusions.includes(id)) {
     return uniqueId(exclusions, len);

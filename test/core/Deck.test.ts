@@ -1,19 +1,19 @@
 import createDeckOfCards from '../../src/core/Deck';
 import Card, { suits, ranks } from '../../src/core/Card';
 
-describe("Deck() unit tests:", () => {
-  describe("Deck.constructor", () => {
+describe('Deck() unit tests:', () => {
+  describe('Deck.constructor', () => {
     const d = createDeckOfCards();
-    test("Deck has 52 cards", () => {
+    test('Deck has 52 cards', () => {
       expect(d.cards.length).toEqual(52);
     });
-    test("Deck has 0 in trash", () => {
+    test('Deck has 0 in trash', () => {
       expect(d.trash.length).toEqual(0);
     });
   });
 
-  describe("Deck.shuffle", () => {
-    test("Deck is close to fully random", () => {
+  describe('Deck.shuffle', () => {
+    test('Deck is close to fully random', () => {
       const d = createDeckOfCards();
       const places = [];
       for (let i = 0; i < suits.length; i++) {
@@ -36,21 +36,21 @@ describe("Deck() unit tests:", () => {
     });
   });
 
-  describe("Deck.addToTrash", () => {
+  describe('Deck.addToTrash', () => {
     const d = createDeckOfCards();
     const oldTrashLength = d.trash.length;
     const cardToTrash = d.dealCard();
     d.addToTrash(cardToTrash);
-    test("trashed card is on top of deck.trash", () => {
+    test('trashed card is on top of deck.trash', () => {
       expect(d.trash[d.trash.length - 1]).toEqual(cardToTrash);
     });
 
-    test("length of deck.trash incriments by one", () => {
+    test('length of deck.trash incriments by one', () => {
       expect(d.trash.length - 1).toEqual(oldTrashLength);
     });
   });
 
-  describe("Deck.reload", () => {
+  describe('Deck.reload', () => {
     const d = createDeckOfCards();
     const randomAmountToDeal = Math.floor(Math.random() * 52);
     const randomAmountToTrash = Math.floor(Math.random() * randomAmountToDeal);
@@ -58,22 +58,22 @@ describe("Deck() unit tests:", () => {
     for (let i = 0; i < randomAmountToDeal; i++) {
       dealt.push(d.dealCard());
     }
-    test("trash is empty before adding to it", () => {
+    test('trash is empty before adding to it', () => {
       expect(d.trash.length).toBe(0);
     });
 
-    test("trash has correct amount in trash after trashing cards", () => {
+    test('trash has correct amount in trash after trashing cards', () => {
       for (let i = 0; i < randomAmountToTrash; i++) {
         d.addToTrash(dealt.pop());
       }
       expect(d.trash.length).toBe(randomAmountToTrash);
     });
 
-    test("before reloading deck.cards is not full", () => {
+    test('before reloading deck.cards is not full', () => {
       expect(d.cards.length).toBe(52 - randomAmountToDeal);
     });
 
-    test("after reloading all cards from deck.trash were transfered to deck.cards", () => {
+    test('after reloading all cards from deck.trash were transfered to deck.cards', () => {
       d.reload();
       expect(d.cards.length).toBe(
         52 - randomAmountToDeal + randomAmountToTrash
@@ -82,22 +82,22 @@ describe("Deck() unit tests:", () => {
     });
   });
 
-  describe("Deck.dealCard", () => {
+  describe('Deck.dealCard', () => {
     const d = createDeckOfCards();
     const oldTop = d.cards[d.cards.length - 1];
     const oldLength = d.cards.length;
     const card = d.addToTrash(d.dealCard());
 
-    test("returns card on top of stack", () => {
+    test('returns card on top of stack', () => {
       expect(card instanceof Card).toBe(true);
       expect(card).toEqual(oldTop);
     });
 
-    test("length of deck.cards decriments by one", () => {
+    test('length of deck.cards decriments by one', () => {
       expect(d.cards.length + 1).toEqual(oldLength);
     });
 
-    test("automatically reloads when empty if trash has cards", () => {
+    test('automatically reloads when empty if trash has cards', () => {
       while (d.cards.length) d.addToTrash(d.dealCard());
 
       expect(d.cards.length).toBe(0);
@@ -105,7 +105,7 @@ describe("Deck() unit tests:", () => {
       expect(d.cards.length).toBe(51);
     });
 
-    test("throws an error when empty and trash is empty", () => {
+    test('throws an error when empty and trash is empty', () => {
       while (d.cards.length) d.dealCard();
 
       expect(d.cards.length).toBe(0);

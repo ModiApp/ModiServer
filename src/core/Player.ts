@@ -45,7 +45,11 @@ class ModiPlayer {
   }
 }
 
-function createModiPlayer(username: string, id: PlayerId, controller: PlayerController): ModiPlayer {
+function createModiPlayer(
+  username: string,
+  id: PlayerId,
+  controller: PlayerController
+): ModiPlayer {
   return new ModiPlayer(username, id, controller);
 }
 

@@ -1,8 +1,4 @@
-import createModiGame from "./ModiGame";
-import createModiPlayer from "./Player";
+import createModiGame from './ModiGame';
+import createModiPlayer from './Player';
 
-
-export {
-    createModiGame,
-    createModiPlayer,
-};
+export { createModiGame, createModiPlayer };
