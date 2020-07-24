@@ -16,29 +16,31 @@ export function uniqueIds(count: number, len = 10): string[] {
   return ids;
 }
 
-/** A property decorator that fires the callback fn with the new value of said property.
- *
- * ### Usage:
- * ```js
- * const fnToRunOnMyPropChange = (propVal) => {
- *    console.log("myProperty's value chaned:", propVal);
- * }
- *
- * @onValueChanged(fnToRunOnMyPropChange);
- * const myProperty = 5;
- *
- * myProperty = 6;
- * // Prints "myProperty's value changed: 6";
- * ```
+
+/** ### GroupSort 
+ * Sorts an array of elements by group in ascending order.
+ * @param {any[]} elems The list of elements to group sort
+ * @param {function} valueExtractor a method to run on each elem to numerically evalutate them
+ * @returns {any[][]} A 2-d array, of the elements grouped by value in ascending order.
  */
-// export const onValueChanged = (fn: (value: any) => void) => {
-//   return <T>(target: T, key: keyof T) => {
-//     const actualSet = Object.getOwnPropertyDescriptor(target, key).set;
-//     Object.defineProperty(target, key, {
-//       set(val) {
-//         actualSet(val);
-//         if (fn) fn(val);
-//       }
-//     });
-//   };
-// };
+export const groupSort = <T>(
+  elems: T[],
+  valueExtractor: (el: T) => number,
+): T[][] => {
+  const groups: { [value: number]: T[] } = {};
+
+  elems.forEach((el) => {
+    const value = valueExtractor(el);
+    if (!groups[value]) {
+      groups[value] = [];
+    }
+    groups[value].push(el);
+  });
+
+  const sortedGroups = Object.entries(groups)
+    .sort((a, b) => Number(a[0]) - Number(b[0]))
+    .map(([_, el]) => el);
+
+  return sortedGroups;
+};
+
