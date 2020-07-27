@@ -1,4 +1,4 @@
-import { uniqueId, uniqueIds, groupSort } from '../src/util';
+import { uniqueId, uniqueIds, groupSort, rotateInPlace } from '../src/util';
 
 describe('util tests:', () => {
   describe('uniqueId()', () => {
@@ -59,6 +59,18 @@ describe('util tests:', () => {
     test('groups are ordered in ascending order by value', () => {
       const valueOrder = sortedElems.map((group) => group[0].value);
       expect(valueOrder).toEqual(valueOrder.sort());
+    });
+  });
+
+  describe('rotateInPlace', () => {
+    const arr = [1, 2, 3, 4, 5, 6, 7];
+
+    beforeAll(() => {
+      rotateInPlace(arr, 4);
+    });
+
+    test('correctly rotates array in place', () => {
+      expect(arr).toEqual([4, 5, 6, 7, 1, 2, 3]);
     });
   });
 });

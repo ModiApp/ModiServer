@@ -1,6 +1,6 @@
 export function uniqueId(exclusions: string[] = [], len = 5): string {
   const randInt = () => Math.floor(Math.random() * 10);
-  const randInts = n => (n > 0 ? randInts(n - 1) + `${randInt()}` : '');
+  const randInts = (n) => (n > 0 ? randInts(n - 1) + `${randInt()}` : '');
   const id = randInts(len);
   if (exclusions.includes(id)) {
     return uniqueId(exclusions, len);
@@ -9,24 +9,23 @@ export function uniqueId(exclusions: string[] = [], len = 5): string {
 }
 
 export function uniqueIds(count: number, len = 10): string[] {
-  const ids = [];
+  const ids: string[] = [];
   for (let i = 0; i < count; i++) {
     ids.push(uniqueId(ids, len));
   }
   return ids;
 }
 
-
-/** ### GroupSort 
+/** ### GroupSort
  * Sorts an array of elements by group in ascending order.
  * @param {any[]} elems The list of elements to group sort
  * @param {function} valueExtractor a method to run on each elem to numerically evalutate them
  * @returns {any[][]} A 2-d array, of the elements grouped by value in ascending order.
  */
-export const groupSort = <T>(
+export function groupSort<T>(
   elems: T[],
   valueExtractor: (el: T) => number,
-): T[][] => {
+): T[][] {
   const groups: { [value: number]: T[] } = {};
 
   elems.forEach((el) => {
@@ -38,9 +37,14 @@ export const groupSort = <T>(
   });
 
   const sortedGroups = Object.entries(groups)
-    .sort((a, b) => Number(a[0]) - Number(b[0]))
+    .sort(([aValue], [bValue]) => Number(aValue) - Number(bValue))
     .map(([_, el]) => el);
 
   return sortedGroups;
-};
+}
 
+export function rotateInPlace(arr: any[], num: number) {
+  for (let i = 0; i < num; i++) {
+    arr.unshift(arr.pop());
+  }
+}
