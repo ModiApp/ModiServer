@@ -10,6 +10,9 @@ declare interface IModiPlayer {
   card: ICard | undefined;
   isAlive: boolean;
   loseLife: () => void;
+  setCard: (card: ICard) => void;
+  removeCard: () => void;
+  tradeCardsWith: (otherPlayer: IModiPlayer) => void;
 }
 declare type PlayerId = string;
 
@@ -28,13 +31,13 @@ declare type ModiGameState = {
 
   /** The ```ModiGameState.playerOrder[activePlayerIdx]``` is the player whose
    * turn it is. */
-  activePlayerIdx: number;
+  // activePlayerIdx: number | undefined;
 
   /** A map of player ids to whether or not they have a card */
   // playersCards: CardMap;
 
   /** An array of playerIds and their moves for this round */
-  moves: [PlayerId, PlayerMove][];
+  moves: PlayerMove[];
 
   /** A map of player ids and their live counts */
   // liveCounts: { [playerId: string]: number };
@@ -42,17 +45,38 @@ declare type ModiGameState = {
   /** Changes each round, as dealer moves left. Dealer is last. */
   // playerOrder: PlayerId[];
 
-  orderedPlayers: IModiPlayer[];
+  players: IModiPlayer[];
 
   _stateVersion: number;
 };
 
 type PlayersUpdatedAction = {
   type: 'PLAYERS_UPDATED';
-  payload: { orderedPlayers: IModiPlayer[] };
+  payload: { players: IModiPlayer[] };
 };
+type ActivePlayerIdxChangedAction = {
+  type: 'ACTIVE_PLAYER_CHANGED';
+  payload: { activePlayerIdx: number };
+};
+type RoundIncrementedAction = {
+  type: 'ROUND_INCREMENTED';
+};
+type MoveAddedAction = {
+  type: 'MOVE_ADDED';
+  payload: { move: PlayerMove };
+};
+type MovesResetAction = {
+  type: 'MOVES_RESET';
+};
+
 type ActivePlayerChangedAction = {};
-type ModiGameStateAction = PlayersUpdatedAction;
+
+type ModiGameStateAction =
+  | PlayersUpdatedAction
+  | ActivePlayerIdxChangedAction
+  | RoundIncrementedAction
+  | MoveAddedAction
+  | MovesResetAction;
 
 type ModiGameStateStore = import('redux').Store<
   ModiGameState,
