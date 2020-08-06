@@ -1,17 +1,10 @@
-export const ranks: Rank[] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
-export const suits: Suit[] = ['spades', 'clubs', 'hearts', 'diamonds'];
-
-class Card {
-  public rank: Rank;
-  public suit: Suit;
+class Card implements ICard {
+  suit: Suit;
+  rank: Rank;
 
   constructor(suit: Suit, rank: Rank) {
-    this.rank = rank;
     this.suit = suit;
-  }
-
-  public value(): number {
-    return this.rank;
+    this.rank = rank;
   }
 }
 
