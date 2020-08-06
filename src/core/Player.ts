@@ -1,57 +1,46 @@
-class ModiPlayer {
-  public username: string;
-  public lives: number;
-  public id: string;
-  public controller: PlayerController;
-  public card?: Card;
+class ModiPlayer implements IModiPlayer {
+  static initialLifeCount = 3;
 
-  constructor(name: string, id: string, controller: PlayerController) {
-    this.controller = controller;
-    this.username = name;
-    this.lives = 3;
-    this.id = id;
-  }
+  id: string;
+  lives: number;
+  card: ICard | undefined;
+  username: string;
 
-  public wantsToSwap(): Promise<boolean> {
-    return this.controller.getMove().then((m: PlayerMove) => m === 'swap');
-  }
-
-  public tradeCardsWith(other: ModiPlayer): Card {
-    const otherCard = other.card;
-    other.card = this.card;
-    this.card = otherCard;
-    return this.card;
-  }
-
-  public recieveCard(card: Card): Card {
-    if (this.card !== undefined) {
-      throw new Error(`${this.username} already has a card: ${this.card}`);
-    }
-    this.card = card;
-    return this.card;
-  }
-
-  public removeCard(): Card | undefined {
-    const card = this.card;
+  constructor(playerId: string, username: string) {
+    this.id = playerId;
+    this.lives = ModiPlayer.initialLifeCount;
     this.card = undefined;
-    return card;
+    this.username = username;
   }
 
-  public loseLife(): void {
+  loseLife() {
+    if (!this.isAlive) {
+      throw new Error(`Player ${this.id} has no lives left to lose.`);
+    }
     this.lives -= 1;
   }
-  public chooseDealer(): Promise<PlayerId> {
-    return this.controller.chooseDealer();
+
+  revive() {
+    this.lives = ModiPlayer.initialLifeCount;
+  }
+
+  // Make sure there's no reference bugs here
+  tradeCardsWith(otherPlayer: IModiPlayer) {
+    const theirCard = otherPlayer.card;
+    otherPlayer.card = this.card;
+    this.card = theirCard;
+  }
+
+  setCard(card: ICard) {
+    this.card = card;
+  }
+  removeCard() {
+    this.card = undefined;
+  }
+
+  get isAlive() {
+    return this.lives > 0;
   }
 }
 
-function createModiPlayer(
-  username: string,
-  id: PlayerId,
-  controller: PlayerController
-): ModiPlayer {
-  return new ModiPlayer(username, id, controller);
-}
-
-export { ModiPlayer };
-export default createModiPlayer;
+export default ModiPlayer;
