@@ -1,3 +1,4 @@
+declare type GameId = string;
 declare type Suit = 'spades' | 'clubs' | 'hearts' | 'diamonds';
 declare type Rank = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13;
 declare interface ICard {
@@ -8,19 +9,30 @@ declare interface IModiPlayer {
   id: string;
   lives: number;
   card: ICard | undefined;
+  username: string;
   isAlive: boolean;
   loseLife: () => void;
   setCard: (card: ICard) => void;
   removeCard: () => void;
   tradeCardsWith: (otherPlayer: IModiPlayer) => void;
+
+  /** Resets a players lives prop to its initial value */
+  revive: () => void;
 }
+
+declare interface IConnectedUser {
+  playerId: string;
+  username: string;
+  socket: SocketIO.Socket;
+}
+
 declare type PlayerId = string;
 
 declare type CardMap = { [playerId: string]: ICard | undefined };
 
 /** When the adjacent player has a king, this player's swap will be an
  * attempted-swap */
-declare type PlayerMove = 'stick' | 'swap' | 'attempted-swap';
+declare type PlayerMove = 'swap' | 'stick' | 'attempted-swap';
 
 declare type ModiGameState = {
   /** What round the game is currently up to */

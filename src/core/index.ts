@@ -1,4 +1,4 @@
-import createModiGame from './ModiGame';
-import createModiPlayer from './Player';
+import ModiGame from './ModiGame';
+import ConnectedUser from './ConnectedUser';
 
-export { createModiGame, createModiPlayer };
+export { ModiGame, ConnectedUser };

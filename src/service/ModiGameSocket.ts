@@ -1,11 +1,11 @@
-import ModiGame from '../core/ModiGame2';
+import { ModiGame, ConnectedUser } from '../core';
 
 function createModiGameSocket(
   io: SocketIO.Server,
   gameId: string,
-  playerIds: string[],
-  onGameEnd: () => void,
+  players: { id: string; username: string }[],
   getPlayAgainLobbyId: () => string,
+  onGameDeleted: () => void,
 ) {
   const nspUrl = `/games/${gameId}`;
   if (Object.keys(io.nsps).includes(nspUrl)) {
@@ -14,17 +14,20 @@ function createModiGameSocket(
     );
   }
   const nsp = io.of(nspUrl);
-  const connections: SocketConnection[] = [];
+  const connections: IConnectedUser[] = [];
 
   let game: ModiGame | undefined = undefined;
 
-  nsp.on('connection', (socket: SocketIO.Socket) => {
+  nsp.on('connect', (socket: SocketIO.Socket) => {
     const { playerId, username } = socket.handshake.query;
-    if (!playerIds.includes(playerId)) {
-      socket.send('Unauthorized');
+    if (!players.map((player) => player.id).includes(playerId)) {
+      socket.emit('UNAUTHORIZED');
       return;
     }
-    connections.push(new SocketConnection(playerId, username, socket));
+    if (game) {
+      socket.emit('GAME_STATE_UPDATED', game.getState());
+    }
+    connections.push(new ConnectedUser(playerId, username, socket));
 
     socket.on('disconnect', () => {
       connections.splice(
@@ -33,44 +36,34 @@ function createModiGameSocket(
       );
     });
 
-    if (!game && connections.length === playerIds.length) {
+    if (!game && connections.length === players.length) {
       game = startGame();
-
-      socket.on('CHOOSE_DEALER', (dealerId: string) => {
-        game!.startRound(dealerId);
-      });
-
-      socket.on('MADE_MOVE', (move: PlayerMove) => {
-        game!.handleMove(playerId, move);
-      });
-
-      socket.on('PLAY_AGAIN', () => {
-        socket.send('PLAY_AGAIN_LOBBY_ID', getPlayAgainLobbyId());
-      });
     }
+
+    socket.on('CHOOSE_DEALER', (dealerId: string) => {
+      game!.startRound(dealerId);
+    });
+
+    socket.on('MADE_MOVE', (move: PlayerMove) => {
+      game!.handleMove(playerId, move);
+    });
+
+    socket.on('PLAY_AGAIN', () => {
+      socket.emit('PLAY_AGAIN_LOBBY_ID', getPlayAgainLobbyId());
+    });
   });
 
   function startGame(): ModiGame {
     function onGameStateChanged(newGameState: ModiGameState) {
-      nsp.emit('GAME_STATE_CHANGED', newGameState);
+      nsp.emit('GAME_STATE_UPDATED', newGameState);
     }
-    const _game = new ModiGame(playerIds, onGameStateChanged, onGameEnd);
+    const _game = new ModiGame(players, onGameStateChanged);
     _game.start();
 
     return _game;
   }
-}
 
-class SocketConnection {
-  playerId: string;
-  username: string;
-  socket: SocketIO.Socket;
-
-  constructor(playerId: string, username: string, socket: SocketIO.Socket) {
-    this.playerId = playerId;
-    this.username = username;
-    this.socket = socket;
-  }
+  return;
 }
 
 export default createModiGameSocket;
