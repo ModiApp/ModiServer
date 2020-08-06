@@ -48,3 +48,7 @@ export function rotateInPlace(arr: any[], num: number) {
     arr.unshift(arr.pop());
   }
 }
+
+export function zipArrays<T, K>(arr1: T[], arr2: K[]): [T, K][] {
+  return arr1.map((el, i) => [el, arr2[i]]);
+}
