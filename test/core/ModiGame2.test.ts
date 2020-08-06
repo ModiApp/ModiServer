@@ -1,4 +1,4 @@
-import ModiGame from '../../src/core/ModiGame2';
+import ModiGame from '../../src/core/ModiGame';
 import { groupSort } from '../../src/util';
 
 const areAllValuesEqual = (arr: Array<any>) =>
