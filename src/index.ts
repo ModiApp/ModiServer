@@ -27,7 +27,7 @@ app.head('/games/:id', (req, res) => {
   res.status(activeGameIds.includes(req.params.id) ? 200 : 404).end();
 });
 
-server.listen(5000);
+server.listen(process.env.PORT || 5000);
 
 function createLobby() {
   const newLobbyId = uniqueId(activeLobbyIds, 4);
