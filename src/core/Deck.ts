@@ -1,59 +1,50 @@
-import Card, { ranks, suits } from "./Card";
-
-class Deck implements DeckOfCards {
-  public cards: Card[];
-  public trash: Card[];
+import Card from './Card';
+class Deck {
+  private _trash: ICard[];
+  private _cards: ICard[];
 
   constructor() {
-    this.cards = [];
-    suits.forEach((suit: Suit) =>
-      ranks.forEach((rank: Rank) => {
-        this.cards.push(new Card(suit, rank));
-      })
+    const suits: Suit[] = ['spades', 'clubs', 'hearts', 'diamonds'];
+    const ranks: Rank[] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
+    this._cards = [];
+    this._trash = [];
+    suits.forEach((suit) =>
+      ranks.forEach((rank) => this._cards.push(new Card(suit, rank))),
     );
-
-    this.trash = [];
+    this.shuffle();
   }
 
-  public shuffle() {
-    let cardsLeft = this.cards.length;
+  get cards() {
+    return this._cards;
+  }
+
+  shuffle(): void {
+    let cardsLeft = this._cards.length;
     let rand;
 
     while (cardsLeft) {
       rand = Math.floor(Math.random() * cardsLeft--);
-      [this.cards[cardsLeft], this.cards[rand]] = [
-        this.cards[rand],
-        this.cards[cardsLeft],
+      [this._cards[cardsLeft], this._cards[rand]] = [
+        this._cards[rand],
+        this._cards[cardsLeft],
       ];
     }
   }
 
-  public dealCard(): Card {
-    if (!this.cards.length) {
-      if (!this.trash.length) {
-        throw new Error('No cards left in deck');
-      }
-      this.reload();
+  pop(): ICard {
+    if (this._cards.length === 0) {
+      this.restock();
     }
-    return this.cards.pop();
+    const cardToDeal = this._cards.pop()!;
+    this._trash.push(cardToDeal);
+    return cardToDeal;
   }
 
-  public addToTrash(card: Card): Card {
-    this.trash.push(card);
-    return card;
-  }
-
-  public reload(): Card[] {
-    while (this.trash.length) {
-      this.cards.push(this.trash.pop());
-    }
+  restock() {
+    this._cards = this._trash;
+    this._trash = [];
     this.shuffle();
-    return this.cards;
   }
 }
 
-function createDeckOfCards(): DeckOfCards {
-  return new Deck();
-}
-
-export default createDeckOfCards;
+export default Deck;

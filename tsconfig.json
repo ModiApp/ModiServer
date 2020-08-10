@@ -5,8 +5,9 @@
     "noImplicitAny": false,
     "experimentalDecorators": true,
     "esModuleInterop": true,
-    "outDir": "./dist/"
+    "outDir": "./dist/",
+    "strict": true
   },
-  "include": ["src/**/*", "test/**/*", "index.d.ts"],
+  "include": ["src/**/*", "index.d.ts"],
   "exclude": ["node_modules/**/*"]
 }
