@@ -4,7 +4,7 @@
   "description": "The socket connection manager, and game interface for modi-mobile.",
   "main": "./dist/index.js",
   "scripts": {
-    "prestart": "npm run build",
+    "prestart": "yarn run build",
     "build": "tsc",
     "start": "node dist/",
     "dev": "nodemon",

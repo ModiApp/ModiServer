@@ -1,6 +1,6 @@
+import http from 'http';
 import express from 'express';
 import socketio from 'socket.io';
-import http from 'http';
 
 import createLobbySocket from './service/LobbySocket';
 import createGameSocket from './service/ModiGameSocket';
@@ -13,6 +13,8 @@ const io = socketio(server);
 
 const activeGameIds: string[] = [];
 const activeLobbyIds: string[] = [];
+
+app.head('/', (req, res) => res.status(200).end());
 
 app.get('/lobbies/new', (_, res) => {
   const lobbyId = createLobby();
@@ -27,7 +29,11 @@ app.head('/games/:id', (req, res) => {
   res.status(activeGameIds.includes(req.params.id) ? 200 : 404).end();
 });
 
-server.listen(process.env.PORT || 5000);
+server.listen(process.env.PORT || 5000, () => {
+  setInterval(() => {
+    http.get('http://modi-server.herokuapp.com');
+  }, 1000 * 60 * 25);
+});
 
 function createLobby() {
   const newLobbyId = uniqueId(activeLobbyIds, 4);
