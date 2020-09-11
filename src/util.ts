@@ -52,3 +52,16 @@ export function rotateInPlace(arr: any[], num: number) {
 export function zipArrays<T, K>(arr1: T[], arr2: K[]): [T, K][] {
   return arr1.map((el, i) => [el, arr2[i]]);
 }
+export class ScheduledTask {
+  currTimeoutId: NodeJS.Timeout | null;
+  constructor() {
+    this.currTimeoutId = null;
+  }
+  schedule(fn: () => void, ms: number) {
+    this.cancel();
+    this.currTimeoutId = setTimeout(fn, ms);
+  }
+  cancel() {
+    this.currTimeoutId && clearTimeout(this.currTimeoutId);
+  }
+}

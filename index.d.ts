@@ -1,80 +1,75 @@
-// declare type GameId = string;
+declare type GameId = string;
+declare type Suit = 'spades' | 'clubs' | 'hearts' | 'diamonds';
+declare type Rank = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13;
+declare interface ICard {
+  suit: Suit;
+  rank: Rank;
+}
+declare interface IModiPlayer {
+  id: string;
+  lives: number;
+  card: ICard | undefined;
+  username: string;
+  isAlive: boolean;
+  loseLife: () => void;
+  setCard: (card: ICard) => void;
+  removeCard: () => void;
+  tradeCardsWith: (otherPlayer: IModiPlayer) => void;
 
+  /** Resets a players lives prop to its initial value */
+  revive: () => void;
+}
 
-// declare interface PlayerController {
-//   getMove(): Promise<PlayerMove>;
-//   chooseDealer(): Promise<PlayerId>;
-// }
+declare interface IConnectedUser {
+  playerId: string;
+  username: string;
+  socket: SocketIO.Socket;
+}
 
+declare type PlayerId = string;
 
-// declare type ModiGameEvent =
-//   | "dealt cards"
-//   | "game info"
-//   | "players turn"
-//   | "hit deck"
-//   | "ranked players"
-//   | "trashed cards"
-//   | "updated players";
+declare type CardMap = { [playerId: string]: ICard | undefined };
 
-// declare class ModiGame {
-//   static Events: object;
-//   deck: DeckOfCards;
-//   players: ModiPlayer[];
-//   playersAlive: ModiPlayer[];
-//   constructor(players: ModiPlayer[]);
-//   start(): Promise<void>;
-//   playRound(): Promise<void>;
-//   playHighCard(amongPlayers?: ModiPlayer[]): ModiPlayer;
-//   clearPlayerCards(): void;
-//   noOneWonYet(): boolean;
-//   handleCardSwap(fromPlayer: ModiPlayer, toPlayer: ModiPlayer);
-//   handleHitDeck(player: ModiPlayer);
-//   giveEachPlayerACard(players?: ModiPlayer[]): void;
-//   rankPlayersByCards(players?: ModiPlayer[]): ModiPlayer[][];
+/** When the adjacent player has a king, this player's swap will be an
+ * attempted-swap */
+declare type PlayerMove = 'swap' | 'stick' | 'attempted-swap';
 
-//   /** Overrided from EventEmitter */
-//   on(event: ModiGameEvent, callback: (...args: unknown[]) => void): void;
-// }
-// // declare class ModiPlayer {
-// //   /** It is intended for the playerId to be passed in as a parameter. To enable whatever
-// //    * service/program that is dealing with them to have control over their ids.
-// //    */
-// //   constructor(name: string, id: PlayerId, controller: ModiPlayer);
-// //   wantsToSwap(): Promise<boolean>;
-// //   tradeCardsWith(other: ModiPlayer): Card;
-// //   recieveCard(card: Card): Card;
-// //   removeCard(): Card | undefined;
-// //   loseLife(): void;
-// //   username: string;
-// //   lives: number;
-// //   controller: PlayerController;
-// //   card?: Card;
-// //   id: PlayerId;
-// // }
-// declare interface PlayerController {
-//   getMove(): Promise<PlayerMove>;
-//   chooseDealer(): Promise<PlayerId>;
-// }
+declare type ModiGameState = {
+  round: number;
+  moves: PlayerMove[];
+  players: IModiPlayer[];
+  _stateVersion: number;
+};
 
+type PlayersUpdatedAction = {
+  type: 'PLAYERS_UPDATED';
+  payload: { players: IModiPlayer[] };
+};
+type ActivePlayerIdxChangedAction = {
+  type: 'ACTIVE_PLAYER_CHANGED';
+  payload: { activePlayerIdx: number };
+};
+type RoundIncrementedAction = {
+  type: 'ROUND_INCREMENTED';
+};
+type MoveAddedAction = {
+  type: 'MOVE_ADDED';
+  payload: { move: PlayerMove };
+};
+type MovesResetAction = {
+  type: 'MOVES_RESET';
+};
 
-// declare class Card {
-//   suit: Suit;
-//   rank: Rank;
-//   constructor(suit: Suit, rank: Rank);
-//   value(): number;
-// }
-// declare interface DeckOfCards {
-//   cards: Card[];
-//   trash: Card[];
-//   shuffle(): void;
-//   dealCard(): Card;
-//   addToTrash(card: Card): Card;
-//   reload(): Card[];
-// }
+type ActivePlayerChangedAction = {};
 
-// declare class ModiGameServer {
-//   onConnect(socket: SocketIO.Socket): void;
-//   getAuthorizedPlayerIds(): PlayerId[];
-//   getNamespaceName(): string; // this.nsp.name
-//   sendGameState(): void;
-// }
+type ModiGameStateAction =
+  | PlayersUpdatedAction
+  | ActivePlayerIdxChangedAction
+  | RoundIncrementedAction
+  | MoveAddedAction
+  | MovesResetAction;
+
+type ModiGameStateStore = import('redux').Store<
+  ModiGameState,
+  ModiGameStateAction
+>;

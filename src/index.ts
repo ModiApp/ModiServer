@@ -2,8 +2,8 @@ import http from 'http';
 import express from 'express';
 import socketio from 'socket.io';
 
-import createLobbySocket from './service/LobbySocket';
-import createGameSocket from './service/ModiGameSocket';
+import createLobbySocket from './sockets/LobbySocket';
+import createGameSocket from './sockets/ModiGameSocket';
 
 import { uniqueId, uniqueIds, zipArrays } from './util';
 

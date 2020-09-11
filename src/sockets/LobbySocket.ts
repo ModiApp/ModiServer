@@ -1,4 +1,4 @@
-import { zipArrays } from '../util';
+import { zipArrays, ScheduledTask } from '../util';
 
 function createLobbySocket(
   io: SocketIO.Server,
@@ -21,10 +21,11 @@ function createLobbySocket(
 
   const nsp = io.of(nspUrl);
   const attendees: { username: string; id: string }[] = [];
+  const deleteLobbyTask = new ScheduledTask();
 
   nsp.on('connect', (socket: SocketIO.Socket) => {
+    deleteLobbyTask.cancel();
     const { username } = socket.handshake.query;
-    console.log(username, 'connected to', lobbyId, socket.id);
     attendees.push({ username, id: socket.id });
     nsp.emit('LOBBY_STATE_UPDATED', { attendees });
 
@@ -35,11 +36,13 @@ function createLobbySocket(
       );
       nsp.emit('LOBBY_STATE_UPDATED', { attendees });
 
-      // if (attendees.length === 0) {
-      //   nsp.removeAllListeners();
-      //   delete io.nsps['/lobbies/' + lobbyId];
-      //   onDelete();
-      // }
+      if (attendees.length === 0) {
+        deleteLobbyTask.schedule(() => {
+          nsp.removeAllListeners();
+          delete io.nsps['/lobbies/' + lobbyId];
+          onDelete();
+        }, 1000 * 60 * 5);
+      }
     });
 
     socket.on('START_GAME', () => {
