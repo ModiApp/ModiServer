@@ -11,6 +11,7 @@ declare interface IModiPlayer {
   card: ICard | undefined;
   username: string;
   isAlive: boolean;
+  initialLiveCount: number;
   loseLife: () => void;
   setCard: (card: ICard) => void;
   removeCard: () => void;
