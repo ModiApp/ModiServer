@@ -14,7 +14,7 @@ class Deck {
     this.shuffle();
   }
 
-  get cards() {
+  get cards(): ICard[] {
     return this._cards;
   }
 
@@ -41,8 +41,9 @@ class Deck {
   }
 
   restock() {
-    this._cards = this._trash;
-    this._trash = [];
+    while (this._trash.length) {
+      this._cards.push(this._trash.pop()!);
+    }
     this.shuffle();
   }
 }

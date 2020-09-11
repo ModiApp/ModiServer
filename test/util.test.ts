@@ -1,4 +1,11 @@
-import { uniqueId, uniqueIds, groupSort, rotateInPlace } from '../src/util';
+import {
+  uniqueId,
+  uniqueIds,
+  groupSort,
+  rotateInPlace,
+  ScheduledTask,
+  zipArrays,
+} from '../src/util';
 
 describe('util tests:', () => {
   describe('uniqueId()', () => {
@@ -36,7 +43,7 @@ describe('util tests:', () => {
     });
   });
 
-  describe('groupSort', () => {
+  describe('groupSort()', () => {
     let elems: { id: string; value: number }[];
     let sortedElems: { id: string; value: number }[][];
     beforeAll(() => {
@@ -62,7 +69,7 @@ describe('util tests:', () => {
     });
   });
 
-  describe('rotateInPlace', () => {
+  describe('rotateInPlace()', () => {
     const arr = [1, 2, 3, 4, 5, 6, 7];
 
     beforeAll(() => {
@@ -71,6 +78,62 @@ describe('util tests:', () => {
 
     test('correctly rotates array in place', () => {
       expect(arr).toEqual([4, 5, 6, 7, 1, 2, 3]);
+    });
+  });
+
+  describe('zipArrays()', () => {
+    test('zipping to equally sized arrays results in array of tuples of same length', () => {
+      const arr1 = [1, 2, 3, 4, 5];
+      const arr2 = [5, 4, 3, 2, 1];
+      const zipped = zipArrays(arr1, arr2);
+      expect(zipped).toEqual([
+        [1, 5],
+        [2, 4],
+        [3, 3],
+        [4, 2],
+        [5, 1],
+      ]);
+    });
+  });
+
+  describe('ScheduledTask()', () => {
+    beforeEach(() => {
+      jest.useFakeTimers();
+    });
+
+    const task = new ScheduledTask();
+    test('new task has no initial scheduled call', () => {
+      expect(task.currTimeoutId).toBe(null);
+    });
+
+    test('scheduling a task runs the callback after timeout and not before', () => {
+      const callback = jest.fn();
+      task.schedule(callback, 5000);
+
+      expect(callback).not.toBeCalled();
+      jest.runAllTimers();
+      expect(callback).toBeCalled();
+      expect(callback).toHaveBeenCalledTimes(1);
+    });
+
+    test('scheduling a task multiple times only results in one call to the callback', () => {
+      const callback = jest.fn();
+      task.schedule(callback, 5000);
+      task.schedule(callback, 5000);
+      task.schedule(callback, 5000);
+
+      jest.runAllTimers();
+      expect(callback).toBeCalled();
+      expect(callback).toHaveBeenCalledTimes(1);
+    });
+
+    test('canceling a scheduled task results in callback not to be called', () => {
+      const callback = jest.fn();
+      task.schedule(callback, 5000);
+
+      task.cancel();
+      jest.runAllTimers();
+      expect(callback).not.toBeCalled();
     });
   });
 });

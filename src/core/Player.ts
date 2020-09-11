@@ -1,14 +1,14 @@
 class ModiPlayer implements IModiPlayer {
-  static initialLifeCount = 3;
-
   id: string;
   lives: number;
   card: ICard | undefined;
   username: string;
+  initialLifeCount: number;
 
-  constructor(playerId: string, username: string) {
+  constructor(playerId: string, username: string, initialLifeCount = 3) {
     this.id = playerId;
-    this.lives = ModiPlayer.initialLifeCount;
+    this.lives = initialLifeCount;
+    this.initialLifeCount = initialLifeCount;
     this.card = undefined;
     this.username = username;
   }
@@ -21,7 +21,7 @@ class ModiPlayer implements IModiPlayer {
   }
 
   revive() {
-    this.lives = ModiPlayer.initialLifeCount;
+    this.lives = this.initialLifeCount;
   }
 
   // Make sure there's no reference bugs here
