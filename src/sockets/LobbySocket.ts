@@ -21,7 +21,11 @@ function createLobbySocket(
 
   const nsp = io.of(nspUrl);
   const attendees: { username: string; id: string }[] = [];
-  const deleteLobbyTask = new ScheduledTask();
+  const deleteLobbyTask = new ScheduledTask(() => {
+    nsp.removeAllListeners();
+    delete io.nsps['/lobbies/' + lobbyId];
+    onDelete();
+  });
 
   nsp.on('connect', (socket: SocketIO.Socket) => {
     deleteLobbyTask.cancel();
@@ -37,11 +41,7 @@ function createLobbySocket(
       nsp.emit('LOBBY_STATE_UPDATED', { attendees });
 
       if (attendees.length === 0) {
-        deleteLobbyTask.schedule(() => {
-          nsp.removeAllListeners();
-          delete io.nsps['/lobbies/' + lobbyId];
-          onDelete();
-        }, 1000 * 60 * 5);
+        deleteLobbyTask.schedule(1000 * 60 * 5);
       }
     });
 

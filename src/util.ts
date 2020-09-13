@@ -54,12 +54,14 @@ export function zipArrays<T, K>(arr1: T[], arr2: K[]): [T, K][] {
 }
 export class ScheduledTask {
   currTimeoutId: NodeJS.Timeout | null;
-  constructor() {
+  callback: () => void;
+  constructor(callback: () => void) {
     this.currTimeoutId = null;
+    this.callback = callback;
   }
-  schedule(fn: () => void, ms: number) {
+  schedule(ms: number) {
     this.cancel();
-    this.currTimeoutId = setTimeout(fn, ms);
+    this.currTimeoutId = setTimeout(this.callback, ms);
   }
   cancel() {
     this.currTimeoutId && clearTimeout(this.currTimeoutId);
