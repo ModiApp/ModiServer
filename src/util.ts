@@ -64,6 +64,14 @@ export class ScheduledTask {
     this.currTimeoutId = setTimeout(this.callback, ms);
   }
   cancel() {
-    this.currTimeoutId && clearTimeout(this.currTimeoutId);
+    if (this.currTimeoutId) {
+      clearTimeout(this.currTimeoutId);
+      this.currTimeoutId = null;
+    }
   }
 }
+
+// [1,2,3,4,5,6]
+// dealder = 6
+// length = 6
+// dealerIdx = 5

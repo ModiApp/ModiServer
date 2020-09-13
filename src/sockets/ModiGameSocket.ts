@@ -20,6 +20,7 @@ function createModiGameSocket(
 
   nsp.on('connect', (socket: SocketIO.Socket) => {
     const { playerId, username } = socket.handshake.query;
+    console.log(username, 'connected to game!');
     if (!players.map((player) => player.id).includes(playerId)) {
       socket.emit('UNAUTHORIZED');
       return;

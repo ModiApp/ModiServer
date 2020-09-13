@@ -46,12 +46,9 @@ type PlayersUpdatedAction = {
   type: 'PLAYERS_UPDATED';
   payload: { players: IModiPlayer[] };
 };
-type ActivePlayerIdxChangedAction = {
-  type: 'ACTIVE_PLAYER_CHANGED';
-  payload: { activePlayerIdx: number };
-};
-type RoundIncrementedAction = {
-  type: 'ROUND_INCREMENTED';
+type NewRoundAction = {
+  type: 'NEW_ROUND';
+  payload: { players: IModiPlayer[] };
 };
 type MoveAddedAction = {
   type: 'MOVE_ADDED';
@@ -65,8 +62,7 @@ type ActivePlayerChangedAction = {};
 
 type ModiGameStateAction =
   | PlayersUpdatedAction
-  | ActivePlayerIdxChangedAction
-  | RoundIncrementedAction
+  | NewRoundAction
   | MoveAddedAction
   | MovesResetAction;
 

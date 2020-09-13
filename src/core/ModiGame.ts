@@ -16,6 +16,7 @@ class ModiGame {
       ({ id, username }) => new ModiPlayer(id, username),
     );
     this.gameStateStore = createModiGameStateStore(this.createInitialState());
+    onGameStateChanged(this.gameStateStore.getState());
 
     this.gameStateStore.subscribe(() => {
       const newState = this.gameStateStore.getState();
@@ -34,11 +35,10 @@ class ModiGame {
     const dealerIdx = currPlayerOrder.findIndex(
       (player) => player.id === dealerId,
     );
-    const numArrRotations = this.alivePlayers.length - dealerIdx - 1;
-
+    const numArrRotations = currPlayerOrder.length - dealerIdx;
     rotateInPlace(currPlayerOrder, numArrRotations);
-    this.gameStateStore.dispatch(updatePlayers(currPlayerOrder));
-    this.gameStateStore.dispatch(incrementRound());
+
+    this.gameStateStore.dispatch(newRound(currPlayerOrder));
 
     // Kickoff round
     this.dealPlayersCards();
@@ -85,10 +85,7 @@ class ModiGame {
   }
 
   private playHighcard(players = this.alivePlayers) {
-    players.forEach((player) => {
-      player.setCard(this._deck.pop());
-    });
-    this.gameStateStore.dispatch(updatePlayers(this.alivePlayers));
+    this.dealPlayersCards(players);
 
     const rankedPlayers = groupSort(
       this.playersWithCards,
@@ -150,33 +147,30 @@ class ModiGame {
     return {
       round: -1, // Pre highcard
       moves: [],
-      players: this.alivePlayers,
+      players: this._players,
       _stateVersion: -2, // idk, reducer fires twice on init
     };
   }
 
   private removePlayersCards() {
-    const players = this.getState().players;
-    players.forEach((player) => player.card && player.removeCard());
+    const players = this.playersWithCards;
+    players.forEach((player) => player.removeCard());
     this.gameStateStore.dispatch(updatePlayers(players));
   }
 
-  private dealPlayersCards() {
-    const players = this.getState().players;
-    players
-      .filter((player) => player.isAlive)
-      .forEach((player) => {
-        player.setCard(this._deck.pop());
-      });
+  private dealPlayersCards(players = this.alivePlayers) {
+    players.forEach((player) => {
+      player.setCard(this._deck.pop());
+    });
     this.gameStateStore.dispatch(updatePlayers(players));
   }
 
   private get alivePlayers(): ModiPlayer[] {
-    return this._players.filter((player) => player.isAlive);
+    return this.getState().players.filter((player) => player.isAlive);
   }
 
   private get playersWithCards(): ModiPlayer[] {
-    return this._players.filter((player) => !!player.card);
+    return this.getState().players.filter((player) => !!player.card);
   }
 }
 
@@ -205,8 +199,12 @@ function createModiGameStateStore(initialGameState: ModiGameState) {
         const { players } = action.payload;
         return { ...newState, players };
       }
-      case 'ROUND_INCREMENTED': {
-        return { ...newState, round: newState.round + 1 };
+      case 'NEW_ROUND': {
+        return {
+          ...newState,
+          round: newState.round + 1,
+          players: action.payload.players,
+        };
       }
       case 'MOVE_ADDED': {
         const { move } = action.payload;
@@ -228,8 +226,9 @@ export const updatePlayers = (players: ModiPlayer[]): PlayersUpdatedAction => ({
   payload: { players },
 });
 
-export const incrementRound = (): RoundIncrementedAction => ({
-  type: 'ROUND_INCREMENTED',
+export const newRound = (players: ModiPlayer[]): NewRoundAction => ({
+  type: 'NEW_ROUND',
+  payload: { players },
 });
 
 export const addMove = (move: PlayerMove): MoveAddedAction => ({
