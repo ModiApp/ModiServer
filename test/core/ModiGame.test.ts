@@ -37,7 +37,7 @@ describe('ModiGame() Tests', () => {
     });
   });
 
-  describe('ModiGame.playHighCard()', () => {
+  describe('ModiGame.start()', () => {
     const stateHistory: ModiGameState[] = [];
     beforeAll(() => {
       const game = new ModiGame(mockPlayers, (stateUpdate) =>
@@ -57,7 +57,7 @@ describe('ModiGame() Tests', () => {
         .filter((card) => card !== undefined);
       expect(playerCards.length).toBe(0);
     });
-    test('last state change, winner is new rounds dealer', () => {
+    test('winner of highcard is new rounds dealer', () => {
       const winnerRound = stateHistory[stateHistory.length - 4];
       const lastState = stateHistory[stateHistory.length - 1];
 

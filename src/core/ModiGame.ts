@@ -27,7 +27,8 @@ class ModiGame {
   }
 
   public start() {
-    this.playHighcard();
+    const initialDealer = this.playHighcard();
+    this.startRound(initialDealer.id);
   }
 
   public startRound(dealerId: string) {
@@ -84,7 +85,7 @@ class ModiGame {
     return this.gameStateStore.getState();
   }
 
-  private playHighcard(players = this.alivePlayers) {
+  private playHighcard(players = this.alivePlayers): IModiPlayer {
     this.dealPlayersCards(players);
 
     const rankedPlayers = groupSort(
@@ -96,12 +97,10 @@ class ModiGame {
 
     const winners = rankedPlayers[rankedPlayers.length - 1];
     if (winners.length > 1) {
-      this.playHighcard(winners);
-      return;
+      return this.playHighcard(winners);
     }
 
-    const winner = winners[0];
-    this.startRound(winner.id);
+    return winners[0];
   }
 
   private handleEndOfRound() {
