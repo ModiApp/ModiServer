@@ -124,11 +124,13 @@ class ModiGame {
         }),
       ),
     );
+
+    this.gameStateStore.dispatch(resetMoves());
+
     const playersStillAlive = players.filter((player) => player.isAlive);
 
     if (playersStillAlive.length > 1) {
       const newDealerId = playersStillAlive[playersStillAlive.length - 2].id;
-      this.gameStateStore.dispatch(resetMoves());
       this.startRound(newDealerId);
     } else if (playersStillAlive.length === 0) {
       this.handleDoubleGame();

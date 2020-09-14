@@ -37,7 +37,6 @@ server.listen(process.env.PORT || 5000, () => {
 
 function createLobby() {
   const newLobbyId = uniqueId(activeLobbyIds, 4);
-  console.log('created new lobby:', newLobbyId);
 
   const onLobbyDeleted = () => {
     activeLobbyIds.splice(

@@ -21,6 +21,7 @@ function createLobbySocket(
 
   const nsp = io.of(nspUrl);
   const attendees: { username: string; id: string }[] = [];
+
   const deleteLobbyTask = new ScheduledTask(() => {
     nsp.removeAllListeners();
     delete io.nsps['/lobbies/' + lobbyId];
