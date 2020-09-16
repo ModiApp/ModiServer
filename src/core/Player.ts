@@ -24,7 +24,6 @@ class ModiPlayer implements IModiPlayer {
     this.lives = this.initialLiveCount;
   }
 
-  // Make sure there's no reference bugs here
   tradeCardsWith(otherPlayer: IModiPlayer) {
     const theirCard = otherPlayer.card;
     otherPlayer.card = this.card;

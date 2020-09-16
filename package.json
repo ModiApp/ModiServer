@@ -64,7 +64,10 @@
       "@typescript-eslint",
       "prettier"
     ],
-    "ignorePatterns": "*.d.ts",
+    "ignorePatterns": [
+      "*.d.ts",
+      "dist/*"
+    ],
     "rules": {
       "prettier/prettier": [
         "error",
