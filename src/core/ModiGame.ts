@@ -146,7 +146,7 @@ class ModiGame {
 
   private createInitialState(): ModiGameState {
     return {
-      round: -1, // Pre highcard
+      round: 0,
       moves: [],
       players: this._players,
       _stateVersion: -2, // idk, reducer fires twice on init
