@@ -36,7 +36,7 @@ class ModiGame {
     const dealerIdx = currPlayerOrder.findIndex(
       (player) => player.id === dealerId,
     );
-    const numArrRotations = currPlayerOrder.length - dealerIdx;
+    const numArrRotations = currPlayerOrder.length - (dealerIdx + 1);
     rotateInPlace(currPlayerOrder, numArrRotations);
 
     this.gameStateStore.dispatch(newRound(currPlayerOrder));
@@ -45,7 +45,11 @@ class ModiGame {
     this.dealPlayersCards();
   }
 
-  public handleMove(playerId: string, move: PlayerMove) {
+  public handleMove(
+    playerId: string,
+    move: PlayerMove,
+    handleEndOfRound = true,
+  ) {
     const players = this.getState().players;
     const playersWithCards = players.filter((player) => !!player.card);
 
@@ -63,7 +67,7 @@ class ModiGame {
       }
       this.gameStateStore.dispatch(addMove(move));
       this.gameStateStore.dispatch(updatePlayers(this.getState().players));
-      this.handleEndOfRound();
+      handleEndOfRound && this.handleEndOfRound();
     } else {
       if (move == 'swap') {
         // Dealer is last, so there's certainly a player at this index
@@ -114,6 +118,8 @@ class ModiGame {
 
     const [losers] = rankedPlayers;
 
+    const previousDealer = playersWithCards[playersWithCards.length - 1];
+
     this.gameStateStore.dispatch(
       updatePlayers(
         players.map((player) => {
@@ -130,7 +136,8 @@ class ModiGame {
     const playersStillAlive = players.filter((player) => player.isAlive);
 
     if (playersStillAlive.length > 1) {
-      const newDealerId = playersStillAlive[playersStillAlive.length - 2].id;
+      const newDealerId =
+        playersStillAlive[playersStillAlive.indexOf(previousDealer) - 1].id;
       this.startRound(newDealerId);
     } else if (playersStillAlive.length === 0) {
       this.handleDoubleGame();
@@ -214,6 +221,8 @@ function createModiGameStateStore(initialGameState: ModiGameState) {
       case 'MOVES_RESET': {
         return { ...newState, moves: [] };
       }
+      case 'SET_STATE':
+        return action.payload.state;
       default:
         return newState;
     }
@@ -239,6 +248,11 @@ export const addMove = (move: PlayerMove): MoveAddedAction => ({
 
 export const resetMoves = (): MovesResetAction => ({
   type: 'MOVES_RESET',
+});
+
+export const setState = (state: ModiGameState): SetStateAction => ({
+  type: 'SET_STATE',
+  payload: { state },
 });
 
 export default ModiGame;

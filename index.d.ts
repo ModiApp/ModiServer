@@ -57,6 +57,10 @@ type MoveAddedAction = {
 type MovesResetAction = {
   type: 'MOVES_RESET';
 };
+type SetStateAction = {
+  type: 'SET_STATE';
+  payload: { state: ModiGameState };
+}
 
 type ActivePlayerChangedAction = {};
 
@@ -64,7 +68,8 @@ type ModiGameStateAction =
   | PlayersUpdatedAction
   | NewRoundAction
   | MoveAddedAction
-  | MovesResetAction;
+  | MovesResetAction
+  | SetStateAction;
 
 type ModiGameStateStore = import('redux').Store<
   ModiGameState,
