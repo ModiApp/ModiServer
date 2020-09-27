@@ -70,7 +70,6 @@ class ModiGame {
       handleEndOfRound && this.handleEndOfRound();
     } else {
       if (move == 'swap') {
-        // Dealer is last, so there's certainly a player at this index
         const nextPlayer = playersWithCards[activePlayerIdx + 1]!;
         if (nextPlayer.card!.rank === 13) {
           this.gameStateStore.dispatch(addMove('attempted-swap'));
@@ -89,7 +88,7 @@ class ModiGame {
     return this.gameStateStore.getState();
   }
 
-  private playHighcard(players = this.alivePlayers): IModiPlayer {
+  private playHighcard(players = this.getState().players): IModiPlayer {
     this.dealPlayersCards(players);
 
     const rankedPlayers = groupSort(
@@ -166,15 +165,13 @@ class ModiGame {
     this.gameStateStore.dispatch(updatePlayers(players));
   }
 
-  private dealPlayersCards(players = this.alivePlayers) {
+  private dealPlayersCards(players = this.getState().players) {
     players.forEach((player) => {
-      player.setCard(this._deck.pop());
+      if (player.isAlive) {
+        player.setCard(this._deck.pop());
+      }
     });
     this.gameStateStore.dispatch(updatePlayers(players));
-  }
-
-  private get alivePlayers(): ModiPlayer[] {
-    return this.getState().players.filter((player) => player.isAlive);
   }
 
   private get playersWithCards(): ModiPlayer[] {
