@@ -8,6 +8,7 @@ declare interface ICard {
 declare interface IModiPlayer {
   id: string;
   lives: number;
+  initialLifeCount: number;
   card: ICard | undefined;
   username: string;
   isAlive: boolean;
