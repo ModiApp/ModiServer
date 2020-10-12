@@ -1,4 +1,4 @@
-class Card implements ICard {
+class Card {
   suit: Suit;
   rank: Rank;
 

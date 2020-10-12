@@ -1,13 +1,13 @@
-class ConnectedUser implements IConnectedUser {
-  playerId: string;
+class ConnectedPlayer implements PlayerBase {
+  idx: number;
   username: string;
   socket: SocketIO.Socket;
 
-  constructor(playerId: string, username: string, socket: SocketIO.Socket) {
-    this.playerId = playerId;
+  constructor(idx: number, username: string, socket: SocketIO.Socket) {
+    this.idx = idx;
     this.username = username;
     this.socket = socket;
   }
 }
 
-export default ConnectedUser;
+export default ConnectedPlayer;

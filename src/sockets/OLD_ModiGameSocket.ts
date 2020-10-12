@@ -1,4 +1,4 @@
-import { ModiGame, ConnectedUser } from '../core';
+import { ModiGame, ConnectedPlayer } from '../core';
 import { ScheduledTask } from '../util';
 
 function createModiGameSocket(
@@ -15,7 +15,7 @@ function createModiGameSocket(
     );
   }
   const nsp = io.of(nspUrl);
-  const connections: IConnectedUser[] = [];
+  const connections: IConnectedPlayer[] = [];
 
   let game: ModiGame | undefined = undefined;
 
@@ -36,7 +36,7 @@ function createModiGameSocket(
 
     game && socket.emit('GAME_STATE_UPDATED', game.getState());
 
-    connections.push(new ConnectedUser(playerId, username, socket));
+    connections.push(new ConnectedPlayer(playerId, username, socket));
 
     socket.on('disconnect', () => {
       connections.splice(

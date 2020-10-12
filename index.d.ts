@@ -1,77 +1,40 @@
-declare type GameId = string;
-declare type Suit = 'spades' | 'clubs' | 'hearts' | 'diamonds';
+declare type Suit = 'spades' | 'hearts' | 'clubs' | 'diamonds';
 declare type Rank = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13;
-declare interface ICard {
+declare interface Card {
   suit: Suit;
   rank: Rank;
 }
-declare interface IModiPlayer {
-  id: string;
+declare interface IDeck {
+  cards: Card[];
+  shuffle: () => void;
+  pop: () => Card;
+  popMany: (n: number) => Card[];
+  restock: () => void;
+}
+
+type PlayerId = number;
+declare interface PlayerBase {
+  idx: number;
+  username: string;
+}
+
+declare type PlayerMove = 'stick' | 'swap' | 'attempted-swap' | 'hit-deck';
+declare interface Player extends PlayerBase {
   lives: number;
-  card: ICard | undefined;
-  username: string;
-  isAlive: boolean;
-  initialLiveCount: number;
-  loseLife: () => void;
-  setCard: (card: ICard) => void;
-  removeCard: () => void;
-  tradeCardsWith: (otherPlayer: IModiPlayer) => void;
-
-  /** Resets a players lives prop to its initial value */
-  revive: () => void;
+  card: Card | null;
+  move: PlayerMove | null;
+}
+declare interface ActivePlayer extends Player {
+  move: PlayerMove;
+  card: Card;
 }
 
-declare interface IConnectedUser {
-  playerId: string;
-  username: string;
-  socket: SocketIO.Socket;
+declare interface ModiGame {
+  playHighCard: () => PlayerId;
+  startRound: (dealerId: PlayerId) => void;
+  handleMove: (playerIdx, move: PlayerMove) => void;
+  isMyTurn: (playerId: PlayerId) => boolean;
+  initialState: GameState;
+  stateHistory: GameState[];
+  state: GameState;
 }
-
-declare type PlayerId = string;
-
-declare type CardMap = { [playerId: string]: ICard | undefined };
-
-/** When the adjacent player has a king, this player's swap will be an
- * attempted-swap */
-declare type PlayerMove = 'swap' | 'stick' | 'attempted-swap';
-
-declare type ModiGameState = {
-  round: number;
-  moves: PlayerMove[];
-  players: IModiPlayer[];
-  _stateVersion: number;
-};
-
-type PlayersUpdatedAction = {
-  type: 'PLAYERS_UPDATED';
-  payload: { players: IModiPlayer[] };
-};
-type NewRoundAction = {
-  type: 'NEW_ROUND';
-  payload: { players: IModiPlayer[] };
-};
-type MoveAddedAction = {
-  type: 'MOVE_ADDED';
-  payload: { move: PlayerMove };
-};
-type MovesResetAction = {
-  type: 'MOVES_RESET';
-};
-type SetStateAction = {
-  type: 'SET_STATE';
-  payload: { state: ModiGameState };
-}
-
-type ActivePlayerChangedAction = {};
-
-type ModiGameStateAction =
-  | PlayersUpdatedAction
-  | NewRoundAction
-  | MoveAddedAction
-  | MovesResetAction
-  | SetStateAction;
-
-type ModiGameStateStore = import('redux').Store<
-  ModiGameState,
-  ModiGameStateAction
->;

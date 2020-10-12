@@ -1,7 +1,8 @@
 class ModiPlayer implements IModiPlayer {
   id: string;
   lives: number;
-  card: ICard | undefined;
+  card: ICard | null;
+  move: PlayerMove | null;
   username: string;
   initialLiveCount: number;
 
@@ -9,7 +10,8 @@ class ModiPlayer implements IModiPlayer {
     this.id = playerId;
     this.lives = initialLiveCount;
     this.initialLiveCount = initialLiveCount;
-    this.card = undefined;
+    this.card = null;
+    this.move = null;
     this.username = username;
   }
 
@@ -34,7 +36,7 @@ class ModiPlayer implements IModiPlayer {
     this.card = card;
   }
   removeCard() {
-    this.card = undefined;
+    this.card = null;
   }
 
   get isAlive() {

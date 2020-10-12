@@ -1,12 +1,12 @@
 import SocketIOMock from 'socket.io-mock';
-import ConnectedUser from '../../src/core/ConnectedUser';
+import ConnectedPlayer from '../../src/core/ConnectedPlayer';
 
-describe('ConnectedUser() Tests', () => {
-  describe('ConnectedUser.constructor()', () => {
+describe('ConnectedPlayer() Tests', () => {
+  describe('ConnectedPlayer.constructor()', () => {
     const mockPlayerId = '1';
     const mockUsername = 'Ikey';
     const mockSocket = new SocketIOMock();
-    const user = new ConnectedUser(mockPlayerId, mockUsername, mockSocket);
+    const user = new ConnectedPlayer(mockPlayerId, mockUsername, mockSocket);
 
     test('has correct properties', () => {
       expect(user.playerId).toBe(mockPlayerId);

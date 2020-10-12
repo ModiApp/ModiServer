@@ -13,6 +13,31 @@ describe('Deck() unit tests:', () => {
     });
   });
 
+  describe('Deck.constructor(withCardsOnTop)', () => {
+    const initialCardsArray = [
+      new Card('clubs', 2),
+      new Card('diamonds', 4),
+      new Card('spades', 5),
+      new Card('diamonds', 10),
+    ];
+    const initCardsHash = JSON.stringify(initialCardsArray);
+    const d = new Deck(initialCardsArray);
+
+    test('constructor does not modify input array', () => {
+      expect(JSON.stringify(initialCardsArray)).toBe(initCardsHash);
+    });
+
+    test('constructor does not add cards twice', () => {
+      expect(d.cards.length).toBe(52);
+    });
+
+    test('top of deck matches the input array of cards', () => {
+      expect(d.cards.slice(d.cards.length - initialCardsArray.length)).toEqual(
+        initialCardsArray.reverse(),
+      );
+    });
+  });
+
   describe('Deck.shuffle', () => {
     test('Deck is close to fully random', () => {
       const d = new Deck();
@@ -41,7 +66,7 @@ describe('Deck() unit tests:', () => {
     const d = new Deck();
     const randomAmountToDeal = Math.floor(Math.random() * 52);
 
-    const dealt: ICard[] = [];
+    const dealt: Card[] = [];
     for (let i = 0; i < randomAmountToDeal; i++) {
       dealt.push(d.pop());
     }
