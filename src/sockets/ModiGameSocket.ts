@@ -1,4 +1,5 @@
 import { ModiGame, ConnectedUser } from '../core';
+import { ScheduledTask } from '../util';
 
 function createModiGameSocket(
   io: SocketIO.Server,
@@ -18,15 +19,23 @@ function createModiGameSocket(
 
   let game: ModiGame | undefined = undefined;
 
+  const deleteGameTask = new ScheduledTask(() => {
+    nsp.removeAllListeners();
+    delete io.nsps['/games/' + gameId];
+    onGameDeleted();
+  });
+
   nsp.on('connect', (socket: SocketIO.Socket) => {
+    deleteGameTask.cancel();
     const { playerId, username } = socket.handshake.query;
+
     if (!players.map((player) => player.id).includes(playerId)) {
       socket.emit('UNAUTHORIZED');
       return;
     }
-    if (game) {
-      socket.emit('GAME_STATE_UPDATED', game.getState());
-    }
+
+    game && socket.emit('GAME_STATE_UPDATED', game.getState());
+
     connections.push(new ConnectedUser(playerId, username, socket));
 
     socket.on('disconnect', () => {
@@ -34,6 +43,10 @@ function createModiGameSocket(
         connections.findIndex((conn) => conn.socket.id === socket.id),
         1,
       );
+
+      if (connections.length === 0) {
+        deleteGameTask.schedule(1000 * 60 * 60); // delete after an hour of inactivity
+      }
     });
 
     if (!game && connections.length === players.length) {

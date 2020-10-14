@@ -12,6 +12,7 @@ declare interface IModiPlayer {
   card: ICard | undefined;
   username: string;
   isAlive: boolean;
+  initialLiveCount: number;
   loseLife: () => void;
   setCard: (card: ICard) => void;
   removeCard: () => void;
@@ -46,12 +47,9 @@ type PlayersUpdatedAction = {
   type: 'PLAYERS_UPDATED';
   payload: { players: IModiPlayer[] };
 };
-type ActivePlayerIdxChangedAction = {
-  type: 'ACTIVE_PLAYER_CHANGED';
-  payload: { activePlayerIdx: number };
-};
-type RoundIncrementedAction = {
-  type: 'ROUND_INCREMENTED';
+type NewRoundAction = {
+  type: 'NEW_ROUND';
+  payload: { players: IModiPlayer[] };
 };
 type MoveAddedAction = {
   type: 'MOVE_ADDED';
@@ -60,15 +58,19 @@ type MoveAddedAction = {
 type MovesResetAction = {
   type: 'MOVES_RESET';
 };
+type SetStateAction = {
+  type: 'SET_STATE';
+  payload: { state: ModiGameState };
+}
 
 type ActivePlayerChangedAction = {};
 
 type ModiGameStateAction =
   | PlayersUpdatedAction
-  | ActivePlayerIdxChangedAction
-  | RoundIncrementedAction
+  | NewRoundAction
   | MoveAddedAction
-  | MovesResetAction;
+  | MovesResetAction
+  | SetStateAction;
 
 type ModiGameStateStore = import('redux').Store<
   ModiGameState,

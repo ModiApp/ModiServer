@@ -101,14 +101,16 @@ describe('util tests:', () => {
       jest.useFakeTimers();
     });
 
-    const task = new ScheduledTask();
     test('new task has no initial scheduled call', () => {
+      const callback = jest.fn();
+      const task = new ScheduledTask(callback);
       expect(task.currTimeoutId).toBe(null);
     });
 
     test('scheduling a task runs the callback after timeout and not before', () => {
       const callback = jest.fn();
-      task.schedule(callback, 5000);
+      const task = new ScheduledTask(callback);
+      task.schedule(5000);
 
       expect(callback).not.toBeCalled();
       jest.runAllTimers();
@@ -118,9 +120,10 @@ describe('util tests:', () => {
 
     test('scheduling a task multiple times only results in one call to the callback', () => {
       const callback = jest.fn();
-      task.schedule(callback, 5000);
-      task.schedule(callback, 5000);
-      task.schedule(callback, 5000);
+      const task = new ScheduledTask(callback);
+      task.schedule(5000);
+      task.schedule(5000);
+      task.schedule(5000);
 
       jest.runAllTimers();
       expect(callback).toBeCalled();
@@ -129,7 +132,8 @@ describe('util tests:', () => {
 
     test('canceling a scheduled task results in callback not to be called', () => {
       const callback = jest.fn();
-      task.schedule(callback, 5000);
+      const task = new ScheduledTask(callback);
+      task.schedule(5000);
 
       task.cancel();
       jest.runAllTimers();

@@ -3,12 +3,12 @@ class ModiPlayer implements IModiPlayer {
   lives: number;
   card: ICard | undefined;
   username: string;
-  initialLifeCount: number;
+  initialLiveCount: number;
 
-  constructor(playerId: string, username: string, initialLifeCount = 3) {
+  constructor(playerId: string, username: string, initialLiveCount = 3) {
     this.id = playerId;
-    this.lives = initialLifeCount;
-    this.initialLifeCount = initialLifeCount;
+    this.lives = initialLiveCount;
+    this.initialLiveCount = initialLiveCount;
     this.card = undefined;
     this.username = username;
   }
@@ -21,10 +21,9 @@ class ModiPlayer implements IModiPlayer {
   }
 
   revive() {
-    this.lives = this.initialLifeCount;
+    this.lives = this.initialLiveCount;
   }
 
-  // Make sure there's no reference bugs here
   tradeCardsWith(otherPlayer: IModiPlayer) {
     const theirCard = otherPlayer.card;
     otherPlayer.card = this.card;

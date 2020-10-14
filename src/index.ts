@@ -37,7 +37,6 @@ server.listen(process.env.PORT || 5000, () => {
 
 function createLobby() {
   const newLobbyId = uniqueId(activeLobbyIds, 4);
-  console.log('created new lobby:', newLobbyId);
 
   const onLobbyDeleted = () => {
     activeLobbyIds.splice(
@@ -62,7 +61,7 @@ function createLobby() {
 
 function createGame(usernames: string[]) {
   const playerIds = uniqueIds(usernames.length, 10);
-  const gameId = uniqueId(activeGameIds, 10);
+  const newGameId = uniqueId(activeGameIds, 10);
 
   const players = zipArrays(playerIds, usernames).map(([id, username]) => ({
     id,
@@ -79,8 +78,15 @@ function createGame(usernames: string[]) {
     };
   })();
 
-  createGameSocket(io, gameId, players, getPlayAgainLobbyId, () => {});
-  activeGameIds.push(gameId);
+  const onGameEnded = () => {
+    activeGameIds.splice(
+      activeGameIds.findIndex((gameId) => gameId === newGameId),
+      1,
+    );
+  };
 
-  return { gameId, playerIds };
+  createGameSocket(io, newGameId, players, getPlayAgainLobbyId, onGameEnded);
+  activeGameIds.push(newGameId);
+
+  return { gameId: newGameId, playerIds };
 }
