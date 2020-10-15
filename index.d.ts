@@ -14,5 +14,8 @@ declare type GameState = {
   players: Player[];
   version: number;
 }
+type Connections = {
+  [playerId: string]: { username: string; connected: boolean };
+};
 
 declare type StateChangeAction = 'DEALT_CARDS' | ''

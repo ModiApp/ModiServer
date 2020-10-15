@@ -1,36 +1,96 @@
 import io from 'socket.io-client';
-import server from '../src';
+
+import { generateInitialGameState } from '../src/GameStateManager';
 
 const testUrl = 'http://localhost:5000/games/1234';
 
 type StateChangeAction = '';
 
-const connectToGameServer = (accessToken: string, username: string) => new Promise<SocketIOClient.Socket>((resolve, reject) => {
-  const socket = io(testUrl, { query: { accessToken, username }, forceNew: true });
-  socket.on('connect', () => {
-    resolve(socket);
-  });
+type GameSocketClientEmitArgs =
+  | ['get connections']
+  | ['get live updates', number?]
+  | ['get subscribers']
+  | ['get initial state'];
 
-  setTimeout(() => reject(new Error("Request timed out. Could not connect to game socket.")), 2000);
-})
+type GameSocketClientOnArgs =
+  | ['connect', () => void]
+  | ['disconnect', () => void]
 
-type Connections = { [username: string]: boolean };
-const getConnected = (socket: SocketIOClient.Socket) => new Promise<Connections>((resolve, reject) => {
-  socket.emit('get connections');
-  socket.on('connections', (connections: Connections) => resolve(connections));
-  setTimeout(() => reject(new Error('Request timed out. Could not get connections.')), 2000);
-});
+  /** If you request or are subscribed to state changes, you'll get these */
+  | ['state change', (action: StateChangeAction) => void]
 
-const subscribeToLiveStateChanges = (socket: SocketIOClient.Socket, fromVersion?: number) => {
-  let onStateChangeCb = (action: StateChangeAction, version: number) => { };
-  socket.emit('get live updates', fromVersion);
-  socket.on('state change', (action: StateChangeAction, version: number) => onStateChangeCb(action, version));
-  return {
-    onStateChange(cb: (action: StateChangeAction, version: number) => void) { onStateChangeCb = cb }
-  }
+  /** If you request a list of clients currently listening for live updates */
+  | ['subscribers', (playerIds: string[]) => void]
+
+  /** If you request information about who is connected */
+  | ['connections', (connections: Connections) => void]
+
+  /** If you request the initial game state */
+  | ['initial state', (initialGameState: GameState) => void];
+
+interface GameSocketClient extends SocketIOClient.Socket {
+  emit: (...dispatch: GameSocketClientEmitArgs) => this;
+  on: (...event: GameSocketClientOnArgs) => any; // TODO: couldnt figure out proper return type
 }
 
-describe.skip('ModiGameServer Tests', () => {
+const mockPlayerIds = ['1', '2', '3', '4'];
+
+const connectedSockets: GameSocketClient[] = [];
+const connectToGameServer = (accessToken: string, username: string) =>
+  new Promise<GameSocketClient>((resolve, reject) => {
+    const socket = io(testUrl, {
+      query: { accessToken, username },
+      forceNew: true,
+    });
+    socket.on('connect', () => {
+      connectedSockets.push(socket);
+      resolve(socket);
+    });
+
+    setTimeout(
+      () =>
+        reject(
+          new Error('Request timed out. Could not connect to game socket.'),
+        ),
+      2000,
+    );
+  });
+const unplugConnectedSockets = () => {
+  connectedSockets.forEach((socket) => socket.disconnect());
+  while (connectedSockets.length) connectedSockets.pop();
+};
+
+const getConnected = (socket: GameSocketClient) =>
+  new Promise<Connections>((resolve, reject) => {
+    socket.emit('get connections');
+    socket.on('connections', (connections: Connections) =>
+      resolve(connections),
+    );
+    setTimeout(
+      () => reject(new Error('Request timed out. Could not get connections.')),
+      2000,
+    );
+  });
+
+const subscribeToLiveStateChanges = (
+  socket: GameSocketClient,
+  fromVersion?: number,
+) => {
+  let onStateChangeCb = (action: StateChangeAction) => {};
+  socket.emit('get live updates', fromVersion);
+  socket.on('state change', (action: StateChangeAction) =>
+    onStateChangeCb(action),
+  );
+  return {
+    onStateChange(cb: (action: StateChangeAction) => void) {
+      onStateChangeCb = cb;
+    },
+  };
+};
+
+describe.only('ModiGameServer Tests', () => {
+  afterEach(() => unplugConnectedSockets());
+
   test('authorized users can connect to game socket', async () => {
     const socket = await connectToGameServer('1', 'Ikey');
     expect(socket.connected).toBe(true);
@@ -41,28 +101,14 @@ describe.skip('ModiGameServer Tests', () => {
     expect(socket.connected).toBe(false);
   });
 
-  describe('can subscribe to live state changes from any index', () => {
-    test('when fromVersion is not passed, first version is zero', async () => {
-
-      const socket = await connectToGameServer('1', 'Philip');
-      const firstVersion = await new Promise((resolve, reject) => {
-        subscribeToLiveStateChanges(socket).onStateChange((action, version) => {
-          resolve(version);
-        });
-      });
-      
-      expect(firstVersion).toBe(0);
-    })
-
-    test('when fromVersion is passed, first version is fromVersion', async () => {
-      const socket = await connectToGameServer('1', 'Henry');
-      const firstVersion = await new Promise((resolve, reject) => {
-        subscribeToLiveStateChanges(socket, 2).onStateChange((action, version) => {
-          resolve(version);
-        });
-      });
-      expect(firstVersion).toBe(2);
+  test('can request initial state', async () => {
+    const socket = await connectToGameServer('1', 'Kate');
+    const initialState = await new Promise<GameState>((resolve, reject) => {
+      socket.on('initial state', (state: GameState) => resolve(state));
+      socket.emit('get initial state');
+      setTimeout(() => reject(new Error('request timed out')), 2000);
     });
 
+    expect(initialState).toStrictEqual(generateInitialGameState(mockPlayerIds));
   });
 });
