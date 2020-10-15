@@ -10,7 +10,8 @@ type GameSocketClientEmitArgs =
   | ['get connections']
   | ['get live updates', number?]
   | ['get subscribers']
-  | ['get initial state'];
+  | ['get initial state']
+  | ['make move', PlayerMove];
 
 type GameSocketClientOnArgs =
   | ['connect', () => void]
@@ -110,5 +111,66 @@ describe.only('ModiGameServer Tests', () => {
     });
 
     expect(initialState).toStrictEqual(generateInitialGameState(mockPlayerIds));
+  });
+
+  test('can subscribe to live gamestate changes', async () => {
+    const socket = await connectToGameServer('1', 'William');
+    const subscribersBefore = await new Promise<string[]>((resolve, reject) => {
+      socket.on('subscribers', resolve);
+      socket.emit('get subscribers');
+      setTimeout(() => reject(new Error('request timed out')), 2000);
+    });
+    socket.emit('get live updates');
+    const subscribersAfter = await new Promise<string[]>((resolve, reject) => {
+      socket.on('subscribers', resolve);
+      socket.emit('get subscribers');
+    });
+
+    expect(subscribersBefore.includes('1')).toBe(false);
+    expect(subscribersAfter.includes('1')).toBe(true);
+  });
+
+  describe('when someone connects to game socket using same accessToken as a connected player', () => {
+    test('the old socket gets disconnected', async () => {
+      const maggie = await connectToGameServer('1', 'Maggie');
+      expect(maggie.connected).toBe(true);
+      const walter = await connectToGameServer('1', 'Walter');
+      expect(walter.connected).toBe(true);
+
+      // walter should have replaced maggie
+      expect(maggie.connected).toBe(false);
+    });
+    test('if the old socket was subscribed to live state changes, new one shouldnt be', async () => {
+      const maggie = await connectToGameServer('1', 'Maggie');
+      // Maggie will subscribe to state changes as player whose id is 1
+      maggie.emit('get live updates');
+
+      const isPlayer1Subscribed = (socket: GameSocketClient) =>
+        new Promise<boolean>((resolve, reject) => {
+          socket.emit('get subscribers');
+          socket.on('subscribers', (subscriberIds: string[]) =>
+            resolve(subscriberIds.includes('1')),
+          );
+        });
+
+      expect(await isPlayer1Subscribed(maggie)).toBe(true);
+
+      const walter = await connectToGameServer('1', 'Walter');
+      expect(await isPlayer1Subscribed(walter)).toBe(false);
+    });
+  });
+
+  describe.only('when clients emit the take turn event', () => {
+    const makeMove = (socket: GameSocketClient, move: PlayerMove) =>
+      new Promise<boolean>((resolve, reject) => {
+        socket.emit('make move', move);
+      });
+    test('clients whose turn it is are allow to go', () => {
+      expect(false).toBe(true);
+    });
+
+    test('clients whose turn it isnt are not allowed to go', () => {
+      expect(false).toBe(true);
+    });
   });
 });

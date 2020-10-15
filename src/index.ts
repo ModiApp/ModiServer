@@ -1,5 +1,6 @@
 import express from 'express';
 import socketio from 'socket.io';
+import createGameStateManager from './GameStateManager';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -8,23 +9,48 @@ const io = socketio(server);
 
 const authorizedAccessTokens = ['1', '2', '3', '4'];
 
+const gamestateManager = createGameStateManager(authorizedAccessTokens);
+const subscriberIds: string[] = [];
+const connections: { [playerId: string]: GameSocketConnection } = {};
+
+function removeSubscriber(playerId: string) {
+  if (subscriberIds.includes(playerId)) {
+    subscriberIds.splice(
+      subscriberIds.findIndex((id) => id === playerId),
+      1,
+    );
+  }
+}
+
 const testGameRoom: GameRoom = io
   .of('/games/1234')
   .on('connect', (socket: GameSocketConnection) => {
-    const { accessToken, username } = socket.handshake.query;
-    if (!authorizedAccessTokens.includes(accessToken)) {
+    const { accessToken: playerId, username } = socket.handshake.query;
+    if (!authorizedAccessTokens.includes(playerId)) {
       return socket.disconnect();
     }
 
+    if (playerId in connections) {
+      connections[playerId].disconnect();
+    }
+    connections[playerId] = socket;
+
     socket.on('get live updates', (fromVersion?: number) => {
+      subscriberIds.push(playerId);
       socket.emit('state change', '', fromVersion || 0);
     });
 
     socket.on('get initial state', () => {
-      socket.emit('initial state', 'suck my tits bitch');
+      socket.emit('initial state', gamestateManager.getStateAtVersion(0));
     });
 
-    // socket.on('get subscribers');
+    socket.on('get subscribers', () => {
+      socket.emit('subscribers', subscriberIds);
+    });
+
+    socket.on('disconnect', () => {
+      removeSubscriber(playerId);
+    });
   });
 
 interface GameRoom extends SocketIO.Namespace {}
@@ -48,6 +74,6 @@ type GameSocketListener =
   /** Clients who are up to date and waiting for live state updates */
   | ['get subscribers', (playerIds: number[]) => void];
 
-type GameSocketEmitArgs = ['connections'];
+// type GameSocketEmitArgs = ['connections'];
 export { testGameRoom };
 export default app;
