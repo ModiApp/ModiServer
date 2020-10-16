@@ -10,17 +10,9 @@ type GameSocketClientEmitArgs =
 type GameSocketClientOnArgs =
   | ['connect', () => void]
   | ['disconnect', () => void]
-
-  /** If you request or are subscribed to state changes, you'll get these */
   | ['state change', (action: StateChangeAction) => void]
-
-  /** If you request a list of clients currently listening for live updates */
   | ['subscribers', (playerIds: string[]) => void]
-
-  /** If you request information about who is connected */
   | ['connections', (connections: Connections) => void]
-
-  /** If you request the initial game state */
   | ['initial state', (initialGameState: GameState) => void];
 
 interface GameSocketClient extends SocketIOClient.Socket {
@@ -86,13 +78,11 @@ class GameRoomClient {
       };
       this.socket.connect();
 
-      setTimeout(
-        () =>
-          reject(
-            new Error('Request timed out. Could not connect to game socket.'),
-          ),
-        2000,
-      );
+      setTimeout(() => {
+        reject(
+          new Error('Request timed out. Could not connect to game socket.'),
+        );
+      }, 2000);
     });
   }
 
@@ -118,10 +108,9 @@ class GameRoomClient {
         resolve(gamestate),
       );
       this.socket.emit('get initial state');
-      setTimeout(
-        () => reject(new Error('Request for initial game state timed out.')),
-        2000,
-      );
+      setTimeout(() => {
+        reject(new Error('Request for initial game state timed out.'));
+      }, 2000);
     });
   }
 
