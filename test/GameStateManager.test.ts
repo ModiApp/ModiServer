@@ -6,7 +6,7 @@ function generateAuthorizedPlayerIds() {
   return ['1', '2', '3', '4', '5'];
 }
 
-describe.skip('GameStateManager tests', () => {
+describe('GameStateManager tests', () => {
   test('state manager creator returns non null', () => {
     const playerIds = generateAuthorizedPlayerIds();
     const stateManager = createGameStateManager(playerIds);

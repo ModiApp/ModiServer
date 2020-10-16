@@ -8,8 +8,8 @@
     "prestart": "yarn build",
     "start": "node dist/index.js",
     "test": "jest --verbose --watch-All --coverage",
-    "dev": "tsc -p tsconfig.build.json --watch",
-    "server:watch": "nodemon dist/index.js"
+    "tsc": "tsc -p tsconfig.build.json --watch",
+    "nodemon": "nodemon dist/index.js"
   },
   "keywords": [],
   "author": "",
