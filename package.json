@@ -16,12 +16,14 @@
   "license": "ISC",
   "dependencies": {
     "express": "^4.17.1",
+    "lodash": "^4.17.20",
     "socket.io": "^2.3.0",
     "winston": "^2.4.4"
   },
   "devDependencies": {
     "@types/express": "^4.17.8",
     "@types/jest": "^26.0.14",
+    "@types/lodash": "^4.14.162",
     "@types/node": "^14.11.8",
     "@types/socket.io": "^2.1.11",
     "@types/socket.io-client": "^1.4.34",
@@ -61,7 +63,6 @@
       "prettier"
     ],
     "ignorePatterns": [
-      "*.d.ts",
       "dist/*"
     ],
     "rules": {
@@ -75,7 +76,8 @@
         }
       ],
       "require-jsdoc": "off",
-      "valid-jsdoc": "off"
+      "valid-jsdoc": "off",
+      "no-unused-vars": "off"
     }
   },
   "jest": {

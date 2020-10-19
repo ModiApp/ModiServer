@@ -1,6 +1,11 @@
 import express from 'express';
 import socketio from 'socket.io';
-import createGameStateManager from './GameStateManager';
+import {
+  createGameStateStore,
+  createModiGame,
+  generateInitialGameState,
+} from './ModiGame';
+import Deck from './Deck';
 
 function startServer() {
   const app = express();
@@ -9,19 +14,18 @@ function startServer() {
   const io = socketio(server);
 
   const authorizedAccessTokens = ['1', '2', '3', '4'];
+  const gamestateStore = createGameStateStore(
+    generateInitialGameState(authorizedAccessTokens),
+    (action: StateChangeAction, newState: GameState) => {
+      subscriberIds.forEach((playerId) => {
+        connections[playerId].emit('state change', action, newState.version);
+      });
+    },
+  );
+  const modiGame = createModiGame(gamestateStore, new Deck());
 
-  const gamestateManager = createGameStateManager(authorizedAccessTokens);
   const subscriberIds: string[] = [];
   const connections: { [playerId: string]: GameSocketConnection } = {};
-
-  function removeSubscriber(playerId: string) {
-    if (subscriberIds.includes(playerId)) {
-      subscriberIds.splice(
-        subscriberIds.findIndex((id) => id === playerId),
-        1,
-      );
-    }
-  }
 
   const testGameRoom: GameRoom = io
     .of('/games/1234')
@@ -42,15 +46,29 @@ function startServer() {
       });
 
       socket.on('get initial state', () => {
-        socket.emit('initial state', gamestateManager.getStateAtVersion(0));
+        socket.emit('initial state', gamestateStore.initialState);
       });
 
       socket.on('get subscribers', () => {
         socket.emit('subscribers', subscriberIds);
       });
 
+      socket.on('make move', (move: PlayerMove) => {
+        const res = modiGame.handleMove(playerId, move);
+        if (res === 'success') {
+          socket.emit('received move');
+        } else {
+          socket.emit('not your turn');
+        }
+      });
+
       socket.on('disconnect', () => {
-        removeSubscriber(playerId);
+        if (subscriberIds.includes(playerId)) {
+          subscriberIds.splice(
+            subscriberIds.findIndex((id) => id === playerId),
+            1,
+          );
+        }
       });
     });
   return testGameRoom;
@@ -75,7 +93,8 @@ type GameSocketListener =
   | ['get live updates', (fromVersion?: number) => void]
 
   /** Clients who are up to date and waiting for live state updates */
-  | ['get subscribers', (playerIds: number[]) => void];
+  | ['get subscribers', (playerIds: number[]) => void]
+  | ['make move', (move: PlayerMove) => void];
 
 // type GameSocketEmitArgs = ['connections'];
 

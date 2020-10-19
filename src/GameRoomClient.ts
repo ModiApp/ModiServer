@@ -13,7 +13,9 @@ type GameSocketClientOnArgs =
   | ['state change', (action: StateChangeAction) => void]
   | ['subscribers', (playerIds: string[]) => void]
   | ['connections', (connections: Connections) => void]
-  | ['initial state', (initialGameState: GameState) => void];
+  | ['initial state', (initialGameState: GameState) => void]
+  | ['received move', () => void]
+  | ['not your turn', () => void];
 
 interface GameSocketClient extends SocketIOClient.Socket {
   emit: (...dispatch: GameSocketClientEmitArgs) => this;
@@ -111,6 +113,14 @@ class GameRoomClient {
       setTimeout(() => {
         reject(new Error('Request for initial game state timed out.'));
       }, 2000);
+    });
+  }
+
+  makeMove(move: PlayerMove) {
+    return new Promise((resolve, reject) => {
+      this.socket.on('received move', () => resolve('success'));
+      this.socket.on('not your turn', () => resolve('not your turn'));
+      this.socket.emit('make move', move);
     });
   }
 

@@ -1,6 +1,5 @@
 import GameRoomClient from '../src/GameRoomClient';
-
-import { generateInitialGameState } from '../src/GameStateManager';
+import { generateInitialGameState } from '../src/ModiGame';
 
 const mockPlayerIds = ['1', '2', '3', '4'];
 const mockGameId = '1234';
@@ -65,17 +64,31 @@ describe('GameRoomClient Tests', () => {
     });
   });
 
-  // describe.skip('when clients emit the take turn event', () => {
-  //   const makeMove = (socket: GameSocketClient, move: PlayerMove) =>
-  //     new Promise<boolean>((resolve, reject) => {
-  //       socket.emit('make move', move);
-  //     });
-  //   test('clients whose turn it is are allow to go', () => {
-  //     expect(false).toBe(true);
-  //   });
+  describe('GameRoomClient.makeMove', () => {
+    test(`if it is this players turn, every subscribed connection gets alerted`, async () => {
+      const ikey = new GameRoomClient(mockGameId, '1', 'Ikey');
+      const ikeyStateChangeAlerts: StateChangeAction[] = [];
+      ikey
+        .subscribeToLiveStateChanges()
+        .onStateChange(ikeyStateChangeAlerts.push);
 
-  //   test('clients whose turn it isnt are not allowed to go', () => {
-  //     expect(false).toBe(true);
-  //   });
-  // });
+      const pete = new GameRoomClient(mockGameId, '2', 'Pete');
+      const peteStateChangeAlerts: StateChangeAction[] = [];
+      pete
+        .subscribeToLiveStateChanges()
+        .onStateChange(peteStateChangeAlerts.push);
+
+      expect(ikeyStateChangeAlerts.length).toBe(0);
+      expect(peteStateChangeAlerts.length).toBe(0);
+
+      await ikey.makeMove('swap');
+
+      expect(ikeyStateChangeAlerts.length).toBeGreaterThan(0);
+      expect(peteStateChangeAlerts.length).toBeGreaterThan(0);
+    });
+
+    test('if it is not this players turn it throws an error', async () => {
+      const ikey = new GameRoomClient(mockGameId, '1', 'Ikey');
+    });
+  });
 });
