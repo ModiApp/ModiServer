@@ -1,11 +1,10 @@
 import Deck from '../src/Deck';
-import { reduceGameState } from '../src/GameState';
-import { generateInitialGameState } from '../src/ModiGame';
+import { generateInitialGameState, reduceGameState } from '../src/ModiGame';
 
 const mockIds = ['1', '2', '3', '4'];
 const cardDeck = new Deck();
 
-describe.only('ModiGame Tests:', () => {
+describe('ModiGame Tests:', () => {
   describe('generateInitialGameState()', () => {
     const initialState = generateInitialGameState(mockIds);
 
@@ -37,10 +36,28 @@ describe.only('ModiGame Tests:', () => {
   describe('reduceGameState tests', () => {
     test('DEAL_CARDS', () => {
       const initialState = generateInitialGameState(mockIds);
+
+      const playerIdsToDealTo = mockIds;
+      const cardsToDeal = Array(playerIdsToDealTo.length)
+        .fill(null)
+        .map(() => cardDeck.pop());
+
       const newState = reduceGameState(initialState, {
         type: 'DEALT_CARDS',
-        payload: { cards: mockIds.map((id) => [cardDeck.pop(), id]) },
+        payload: {
+          cards: playerIdsToDealTo.map((id, idx) => [cardsToDeal[idx], id]),
+        },
       });
+
+      const players = Object.values(newState.players);
+      const cardsOnTable = players.filter((p) => !!p.card).map((p) => p.card);
+      const playerIdsWithCards = players
+        .filter((p) => !!p.card)
+        .map((p) => p.id);
+
+      expect(players.length).toBe(4);
+      expect(playerIdsWithCards).toStrictEqual(playerIdsToDealTo);
+      expect(cardsOnTable).toStrictEqual(cardsToDeal);
     });
   });
 });

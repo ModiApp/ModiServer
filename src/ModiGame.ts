@@ -19,7 +19,7 @@ export function generateInitialGameState(playerIds: string[]): GameState {
   };
 }
 
-function reduceGameState(
+export function reduceGameState(
   state: GameState,
   action: StateChangeAction,
 ): GameState {
@@ -27,8 +27,25 @@ function reduceGameState(
   switch (action.type) {
     case 'DEALT_CARDS': {
       const { cards } = action.payload;
-      cards.forEach(([card, playerId]) => {
-        newState.players[playerId].card = card;
+      return {
+        ...newState,
+        players: {
+          ...newState.players,
+          ...Object.fromEntries(
+            cards.map(([card, playerId]) => [
+              playerId,
+              {
+                ...newState.players[playerId],
+                card,
+              },
+            ]),
+          ),
+        },
+      };
+    }
+    case 'REMOVE_CARDS': {
+      Object.values(newState.players).forEach((player) => {
+        player.card = null;
       });
       return newState;
     }
@@ -55,7 +72,7 @@ function createGameStateStore(
     dispatch(action: StateChangeAction) {
       history.push(action);
       state = reduceGameState(state, action);
-      onStateChange(action, { ...state });
+      onStateChange(action, state.version);
       return initialState;
     },
     getState() {

@@ -10,7 +10,7 @@ type GameSocketClientEmitArgs =
 type GameSocketClientOnArgs =
   | ['connect', () => void]
   | ['disconnect', () => void]
-  | ['state change', (action: StateChangeAction) => void]
+  | ['state change', StateChangeCallback]
   | ['subscribers', (playerIds: string[]) => void]
   | ['connections', (connections: Connections) => void]
   | ['initial state', (initialGameState: GameState) => void]
@@ -88,17 +88,15 @@ class GameRoomClient {
     });
   }
 
-  subscribeToLiveStateChanges(fromVersion?: number) {
-    let onStateChangeCb = (action: StateChangeAction) => {};
-    this.socket.on('state change', (action: StateChangeAction) =>
-      onStateChangeCb(action),
-    );
+  async subscribeToLiveStateChanges(
+    fromVersion: number,
+    onStateChange: StateChangeCallback,
+  ) {
+    if (!this.connected) {
+      await this.connect();
+    }
+    this.socket.on('state change', onStateChange);
     this.socket.emit('get live updates', fromVersion);
-    return {
-      onStateChange(cb: (action: StateChangeAction) => void) {
-        onStateChangeCb = cb;
-      },
-    };
   }
 
   async getInitialGameState() {
@@ -116,7 +114,8 @@ class GameRoomClient {
     });
   }
 
-  makeMove(move: PlayerMove) {
+  async makeMove(move: PlayerMove) {
+    !this.connected && (await this.connect());
     return new Promise((resolve, reject) => {
       this.socket.on('received move', () => resolve('success'));
       this.socket.on('not your turn', () => resolve('not your turn'));

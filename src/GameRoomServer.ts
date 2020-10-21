@@ -10,15 +10,17 @@ import Deck from './Deck';
 function startServer() {
   const app = express();
   const PORT = process.env.PORT || 5000;
-  const server = app.listen(PORT, () => console.log('running'));
+  const server = app.listen(PORT, () => {
+    console.log('running on', PORT);
+  });
   const io = socketio(server);
 
   const authorizedAccessTokens = ['1', '2', '3', '4'];
   const gamestateStore = createGameStateStore(
     generateInitialGameState(authorizedAccessTokens),
-    (action: StateChangeAction, newState: GameState) => {
+    (action: StateChangeAction, newVersion: number) => {
       subscriberIds.forEach((playerId) => {
-        connections[playerId].emit('state change', action, newState.version);
+        connections[playerId].emit('state change', action, newVersion);
       });
     },
   );
@@ -40,9 +42,18 @@ function startServer() {
       }
       connections[playerId] = socket;
 
-      socket.on('get live updates', (fromVersion?: number) => {
+      socket.on('get live updates', (fromVersion: number) => {
+        const currStateVersion = gamestateStore.getState().version;
+        let idxOfHistory = fromVersion;
+        while (idxOfHistory < currStateVersion) {
+          // send them all past states
+          socket.emit(
+            'state change',
+            gamestateStore.history[idxOfHistory++],
+            idxOfHistory,
+          );
+        }
         subscriberIds.push(playerId);
-        socket.emit('state change', '', fromVersion || 0);
       });
 
       socket.on('get initial state', () => {
@@ -77,7 +88,16 @@ function startServer() {
 interface GameRoom extends SocketIO.Namespace {}
 interface GameSocketConnection extends SocketIO.Socket {
   on: (...eventListener: GameSocketListener) => this;
+  emit: (...eventInfo: GameSocketServerEmitArgs) => any;
 }
+
+type GameSocketServerEmitArgs =
+  | ['state change', StateChangeAction, number]
+  | ['subscribers', string[]]
+  | ['connections', Connections]
+  | ['initial state', GameState]
+  | ['received move']
+  | ['not your turn'];
 
 type GameSocketListener =
   | ['connect', (socket: GameSocketConnection) => void]
@@ -90,7 +110,7 @@ type GameSocketListener =
   | ['get initial state', () => void]
 
   /** The client wants changes from fromVersion and to subscribe to future changes */
-  | ['get live updates', (fromVersion?: number) => void]
+  | ['get live updates', (fromVersion: number) => void]
 
   /** Clients who are up to date and waiting for live state updates */
   | ['get subscribers', (playerIds: number[]) => void]

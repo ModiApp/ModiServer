@@ -29,10 +29,7 @@ declare interface GameStateStore {
   history: StateChangeAction[];
   initialState: GameState;
 }
-type StateChangeCallback = (
-  action: StateChangeAction,
-  newState: GameState,
-) => void;
+type StateChangeCallback = (action: StateChangeAction, version: number) => void;
 declare interface ModiGameController {
   handleMove(playerId: string, move: PlayerMove): 'success' | 'failed';
   // playHighcard(): PlayerId;
@@ -44,7 +41,12 @@ type Connections = {
 
 type PlayerId = string;
 declare type StateChangeAction =
+  | {
+      type: 'START_ROUND';
+      payload: { dealerId: string; activePlayerId: string };
+    }
   | { type: 'DEALT_CARDS'; payload: { cards: [Card, PlayerId][] } }
+  | { type: 'REMOVE_CARDS' }
   | { type: 'PLAYER_HIT_DECK'; payload: { playerId: string; card: Card } }
   | {
       type: 'PLAYERS_TRADED';
