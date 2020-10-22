@@ -15,6 +15,9 @@ function startServer() {
   });
   const io = socketio(server);
 
+  const subscriberIds: string[] = [];
+  const connections: { [playerId: string]: GameSocketConnection } = {};
+
   const authorizedAccessTokens = ['1', '2', '3', '4'];
   const gamestateStore = createGameStateStore(
     generateInitialGameState(authorizedAccessTokens),
@@ -25,9 +28,7 @@ function startServer() {
     },
   );
   const modiGame = createModiGame(gamestateStore, new Deck());
-
-  const subscriberIds: string[] = [];
-  const connections: { [playerId: string]: GameSocketConnection } = {};
+  modiGame.start();
 
   const testGameRoom: GameRoom = io
     .of('/games/1234')
@@ -73,6 +74,12 @@ function startServer() {
         }
       });
 
+      socket.on('choose dealer', (dealerId: string) => {
+        // Do some authorization
+        socket.emit('choice for dealer received');
+        modiGame.setDealerId(dealerId);
+      });
+
       socket.on('disconnect', () => {
         if (subscriberIds.includes(playerId)) {
           subscriberIds.splice(
@@ -97,7 +104,8 @@ type GameSocketServerEmitArgs =
   | ['connections', Connections]
   | ['initial state', GameState]
   | ['received move']
-  | ['not your turn'];
+  | ['not your turn']
+  | ['choice for dealer received'];
 
 type GameSocketListener =
   | ['connect', (socket: GameSocketConnection) => void]
@@ -114,7 +122,8 @@ type GameSocketListener =
 
   /** Clients who are up to date and waiting for live state updates */
   | ['get subscribers', (playerIds: number[]) => void]
-  | ['make move', (move: PlayerMove) => void];
+  | ['make move', (move: PlayerMove) => void]
+  | ['choose dealer', (dealerId: string) => void];
 
 // type GameSocketEmitArgs = ['connections'];
 

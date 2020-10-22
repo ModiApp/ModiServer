@@ -31,16 +31,18 @@ declare interface GameStateStore {
 }
 type StateChangeCallback = (action: StateChangeAction, version: number) => void;
 declare interface ModiGameController {
+  start();
   handleMove(playerId: string, move: PlayerMove): 'success' | 'failed';
-  // playHighcard(): PlayerId;
-  // dealCards(toPlayerIds?: string[]);
+  setDealerId(playerId: string);
 }
+
 type Connections = {
   [playerId: string]: { username: string; connected: boolean };
 };
 
 type PlayerId = string;
 declare type StateChangeAction =
+  | { type: 'HIGHCARD_WINNERS'; payload: { playerIds: string[] } }
   | {
       type: 'START_ROUND';
       payload: { dealerId: string; activePlayerId: string };

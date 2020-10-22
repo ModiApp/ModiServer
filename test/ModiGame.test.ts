@@ -33,7 +33,7 @@ describe('ModiGame Tests:', () => {
     });
   });
 
-  describe('reduceGameState tests', () => {
+  describe('reduceGameState() tests', () => {
     test('DEAL_CARDS', () => {
       const initialState = generateInitialGameState(mockIds);
 
@@ -59,5 +59,51 @@ describe('ModiGame Tests:', () => {
       expect(playerIdsWithCards).toStrictEqual(playerIdsToDealTo);
       expect(cardsOnTable).toStrictEqual(cardsToDeal);
     });
+
+    test('REMOVE_CARDS', () => {
+      const playersToDealTo = mockIds;
+      const cardsToDeal = Array(playersToDealTo.length)
+        .fill(null)
+        .map(() => cardDeck.pop());
+      const stateBefore = createStateForRemoveCardsTests(
+        playersToDealTo,
+        cardsToDeal,
+      );
+      const stateAfter = reduceGameState(stateBefore, { type: 'REMOVE_CARDS' });
+
+      expect(cardsOnTable(stateBefore)).toStrictEqual(cardsToDeal);
+      expect(cardsOnTable(stateAfter)).toStrictEqual([]);
+    });
   });
+
+  describe('createModiGame() tests', () => {});
 });
+
+function createStateForRemoveCardsTests(
+  playerIds: string[],
+  cardsToDeal: Card[],
+): GameState {
+  return {
+    version: 1,
+    orderedPlayerIds: [...playerIds],
+    players: Object.fromEntries(
+      playerIds.map((id, idx) => [
+        id,
+        {
+          id,
+          lives: 3,
+          card: cardsToDeal[idx],
+          move: null,
+        },
+      ]),
+    ),
+    dealerId: null,
+    activePlayerId: null,
+  };
+}
+
+function cardsOnTable(state: GameState): Card[] {
+  return Object.values(state.players)
+    .filter((p) => p.card !== null)
+    .map((p) => p.card!);
+}

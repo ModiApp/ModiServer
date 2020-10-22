@@ -5,7 +5,8 @@ type GameSocketClientEmitArgs =
   | ['get live updates', number?]
   | ['get subscribers']
   | ['get initial state']
-  | ['make move', PlayerMove];
+  | ['make move', PlayerMove]
+  | ['choose dealer', string];
 
 type GameSocketClientOnArgs =
   | ['connect', () => void]
@@ -15,7 +16,8 @@ type GameSocketClientOnArgs =
   | ['connections', (connections: Connections) => void]
   | ['initial state', (initialGameState: GameState) => void]
   | ['received move', () => void]
-  | ['not your turn', () => void];
+  | ['not your turn', () => void]
+  | ['choice for dealer received', () => void];
 
 interface GameSocketClient extends SocketIOClient.Socket {
   emit: (...dispatch: GameSocketClientEmitArgs) => this;
@@ -127,6 +129,20 @@ class GameRoomClient {
     GameRoomClient.connectedSockets.forEach((socket) => socket.disconnect());
     while (GameRoomClient.connectedSockets.length)
       GameRoomClient.connectedSockets.pop();
+  }
+
+  async chooseDealer(dealerId: string) {
+    !this.connected && (await this.connect());
+
+    return new Promise((resolve, reject) => {
+      this.socket.on('choice for dealer received', () => {
+        resolve();
+      });
+      this.socket.emit('choose dealer', dealerId);
+      setTimeout(() => {
+        reject(new Error('Request to choose dealer timed out'));
+      }, 3000);
+    });
   }
 }
 

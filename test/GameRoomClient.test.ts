@@ -4,7 +4,7 @@ import { generateInitialGameState } from '../src/ModiGame';
 const mockPlayerIds = ['1', '2', '3', '4'];
 const mockGameId = '1234';
 
-describe.skip('GameRoomClient Tests', () => {
+describe('GameRoomClient Tests', () => {
   afterEach(() => GameRoomClient.unplugConnectedSockets());
 
   describe('connection tests:', () => {
@@ -63,22 +63,49 @@ describe.skip('GameRoomClient Tests', () => {
     test('first state change actions play highcard', async () => {
       const socket = new GameRoomClient(mockGameId, '1', 'Walter');
 
-      const recordedActions = await new Promise((resolve, reject) => {
-        const actions: StateChangeAction[] = [];
-        socket.subscribeToLiveStateChanges(
-          0,
-          (action: StateChangeAction, version: number) => {
-            actions.push(action);
-            if (action.type === 'START_ROUND') {
-              resolve(actions);
-            }
-          },
-        );
+      const recordedActions = await new Promise<StateChangeAction[]>(
+        (resolve, reject) => {
+          const actions: StateChangeAction[] = [];
+          socket.subscribeToLiveStateChanges(
+            0,
+            (action: StateChangeAction, version: number) => {
+              actions.push(action);
+              if (action.type === 'HIGHCARD_WINNERS') {
+                if (action.payload.playerIds.length === 1) {
+                  const winnerId = action.payload.playerIds[0];
+                  const winner = new GameRoomClient(
+                    mockGameId,
+                    winnerId,
+                    'I won bihh',
+                  );
 
-        setTimeout(() => {
-          reject(new Error('request for state changes of highcard timed out'));
-        }, 3000);
-      });
+                  const dealerId = pickRandomDealerId(winnerId);
+
+                  winner.chooseDealer(dealerId).then(() => {
+                    resolve(actions);
+                  });
+                }
+              }
+            },
+          );
+
+          setTimeout(() => {
+            reject(
+              new Error('request for state changes of highcard timed out'),
+            );
+          }, 3000);
+        },
+      );
+
+      expect(recordedActions[0].type).toBe('DEALT_CARDS');
     });
   });
 });
+
+function pickRandomDealerId(whoIsntThisId: string) {
+  const candidates = [...mockPlayerIds].splice(
+    mockPlayerIds.indexOf(whoIsntThisId),
+    1,
+  );
+  return candidates[Math.floor(Math.random() * candidates.length)];
+}
