@@ -1,7 +1,8 @@
+import fs from 'fs';
 import _ from 'lodash';
 import { groupSort, getNextAlivePlayerId } from './util';
 
-export function generateInitialGameState(playerIds: string[]): GameState {
+export function createInitialGameState(playerIds: string[]): GameState {
   return {
     players: Object.fromEntries(
       playerIds
@@ -63,6 +64,35 @@ export function reduceGameState(
   return newState;
 }
 
+export function createPersistedGameStateStore(
+  gameId: string,
+  initialState: GameState,
+  onStateChange: StateChangeCallback,
+): GameStateStore {
+  const filepath = `./game-${gameId}.json`;
+  fs.writeFileSync(
+    filepath,
+    JSON.stringify({
+      initialState,
+      changeActions: [],
+    }),
+    { encoding: 'utf-8' },
+  );
+  return createGameStateStore(initialState, (changeAction, version) => {
+    const content = JSON.parse(
+      fs.readFileSync(filepath, { encoding: 'utf-8' }),
+    );
+    fs.writeFileSync(
+      filepath,
+      JSON.stringify({
+        ...content,
+        changeActions: [...content.changeActions, changeAction],
+      }),
+    );
+    onStateChange(changeAction, version);
+  });
+}
+
 function createGameStateStore(
   initialState: GameState,
   onStateChange: StateChangeCallback,
@@ -122,12 +152,19 @@ function createModiGame(
 
   return {
     start: playHighcard,
-    setDealerId(dealerId: string) {
-      const activePlayerId = getNextAlivePlayerId(store.getState(), dealerId);
-      store.dispatch({
-        type: 'START_ROUND',
-        payload: { dealerId, activePlayerId },
-      });
+    setDealerId(dealerId: string, playerId: string) {
+      const lastAction = store.history[store.history.length - 2];
+      if (
+        lastAction.type === 'HIGHCARD_WINNERS' &&
+        lastAction.payload.playerIds.length === 1 &&
+        lastAction.payload.playerIds[0] === playerId
+      ) {
+        const activePlayerId = getNextAlivePlayerId(store.getState(), dealerId);
+        store.dispatch({
+          type: 'START_ROUND',
+          payload: { dealerId, activePlayerId },
+        });
+      }
     },
     handleMove(playerId: string, move: PlayerMove) {
       const currentState = store.getState();

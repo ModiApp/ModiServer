@@ -1,0 +1,58 @@
+Should the client have the responbility of knowing who it is and where it sits
+on the table
+
+No! It should be the responsibility of the server to TAILOR that information on
+a per client basis -- This is BECAUSE: Should there be other clients for this
+server, the logic of a client knowing where its position is at the table won't
+need to be replicated for each one. Each one can just expect tailored state.
+
+SO:
+The server is going to be responsible for tailoring small pieces of information
+to each respective client so that they can know:
+
+DEALT_CARDS:
+1. What rotation offset should the cardmap be at so that this {socket connected
+   to server with specific playerId} player's card appears at the bottom of the
+   the card circle on the screen.
+
+2. The CardMap will be tailored to each player:
+    When cards are dealt during the game, players who are not the currnet connected
+    player who have cards, those players will recieve a true value for their card
+    the client will know tha true values mean to display a card face down, and a Card
+    value means to show the card face up. a value of False will not display a card.
+
+3. Order of the card map is crucial. In Modi, when the dealer deals cards, they start
+    with the player to their left and continues aorund the circle until dealing to
+    themself. So, here's the abstract:
+      - If we know the dealer index, then we can properly map out who gets which card,
+      - Since we can assume tha the order the cards were dealt in is the order the
+        players recieve them
+      - This of course assumes that the client knows beforehand, an ordered list of
+        playerIds. That is why ensuring the client recieves the initialState prior
+        to recieving any state change actions is very important. 
+
+
+                  cards[2]
+                    Ikey
+
+
+
+         cards[1]             Dealer:
+          Ralph                 Ray
+                              cards[4]
+
+
+                  cards[0]
+                    Mike
+
+
+
+TRADING CARDS:
+1. Which indices in the CardMap are swapping
+2. If the in
+
+
+
+
+The client is going to recieve initial state
+the client needs to have a GameStateStore manager

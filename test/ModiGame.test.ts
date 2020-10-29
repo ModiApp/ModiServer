@@ -1,12 +1,12 @@
 import Deck from '../src/Deck';
-import { generateInitialGameState, reduceGameState } from '../src/ModiGame';
+import { createInitialGameState, reduceGameState } from '../src/ModiGame';
 
 const mockIds = ['1', '2', '3', '4'];
 const cardDeck = new Deck();
 
 describe('ModiGame Tests:', () => {
-  describe('generateInitialGameState()', () => {
-    const initialState = generateInitialGameState(mockIds);
+  describe('createInitialGameState()', () => {
+    const initialState = createInitialGameState(mockIds);
 
     describe('initialState.players', () => {
       test('every player has no card and no move', () => {
@@ -35,7 +35,7 @@ describe('ModiGame Tests:', () => {
 
   describe('reduceGameState() tests', () => {
     test('DEAL_CARDS', () => {
-      const initialState = generateInitialGameState(mockIds);
+      const initialState = createInitialGameState(mockIds);
 
       const playerIdsToDealTo = mockIds;
       const cardsToDeal = Array(playerIdsToDealTo.length)

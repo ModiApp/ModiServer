@@ -1,5 +1,5 @@
 import GameRoomClient from '../src/GameRoomClient';
-import { generateInitialGameState } from '../src/ModiGame';
+import { createInitialGameState } from '../src/ModiGame';
 
 const mockPlayerIds = ['1', '2', '3', '4'];
 const mockGameId = '1234';
@@ -30,9 +30,7 @@ describe('GameRoomClient Tests', () => {
       const socket = new GameRoomClient(mockGameId, '1', 'Kate');
       const initialState = await socket.getInitialGameState();
 
-      expect(initialState).toStrictEqual(
-        generateInitialGameState(mockPlayerIds),
-      );
+      expect(initialState).toStrictEqual(createInitialGameState(mockPlayerIds));
     });
     describe('when someone connects to game socket using same accessToken as a connected player', () => {
       test('the old socket gets disconnected', async () => {
@@ -59,7 +57,7 @@ describe('GameRoomClient Tests', () => {
     });
   });
 
-  describe('gamestate tests:', () => {
+  describe.only('gamestate tests:', () => {
     test('first state change actions play highcard', async () => {
       const socket = new GameRoomClient(mockGameId, '1', 'Walter');
 

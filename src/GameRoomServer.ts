@@ -1,11 +1,13 @@
 import express from 'express';
 import socketio from 'socket.io';
 import {
-  createGameStateStore,
+  createPersistedGameStateStore,
   createModiGame,
-  generateInitialGameState,
+  createInitialGameState,
 } from './ModiGame';
 import Deck from './Deck';
+
+const mockGameId = '1234';
 
 function startServer() {
   const app = express();
@@ -19,8 +21,9 @@ function startServer() {
   const connections: { [playerId: string]: GameSocketConnection } = {};
 
   const authorizedAccessTokens = ['1', '2', '3', '4'];
-  const gamestateStore = createGameStateStore(
-    generateInitialGameState(authorizedAccessTokens),
+  const gamestateStore = createPersistedGameStateStore(
+    mockGameId,
+    createInitialGameState(authorizedAccessTokens),
     (action: StateChangeAction, newVersion: number) => {
       subscriberIds.forEach((playerId) => {
         connections[playerId].emit('state change', action, newVersion);
@@ -31,7 +34,7 @@ function startServer() {
   modiGame.start();
 
   const testGameRoom: GameRoom = io
-    .of('/games/1234')
+    .of(`/games/${mockGameId}`)
     .on('connect', (socket: GameSocketConnection) => {
       const { accessToken: playerId, username } = socket.handshake.query;
       if (!authorizedAccessTokens.includes(playerId)) {
@@ -77,7 +80,7 @@ function startServer() {
       socket.on('choose dealer', (dealerId: string) => {
         // Do some authorization
         socket.emit('choice for dealer received');
-        modiGame.setDealerId(dealerId);
+        modiGame.setDealerId(dealerId, playerId);
       });
 
       socket.on('disconnect', () => {

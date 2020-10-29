@@ -12,9 +12,6 @@ interface Player {
   card: Card | null;
   move: AdjustedPlayerMove | null;
 }
-interface LinkedPlayer extends Player {
-  nextPlayer: LinkedPlayer;
-}
 
 declare type GameState = {
   players: { [playerId: string]: Player };
@@ -33,12 +30,13 @@ type StateChangeCallback = (action: StateChangeAction, version: number) => void;
 declare interface ModiGameController {
   start();
   handleMove(playerId: string, move: PlayerMove): 'success' | 'failed';
-  setDealerId(playerId: string);
+  setDealerId(dealerId: string, playerId);
 }
 
 type Connections = {
   [playerId: string]: { username: string; connected: boolean };
 };
+type CardMap = (Card | boolean)[];
 
 type PlayerId = string;
 declare type StateChangeAction =
@@ -47,7 +45,7 @@ declare type StateChangeAction =
       type: 'START_ROUND';
       payload: { dealerId: string; activePlayerId: string };
     }
-  | { type: 'DEALT_CARDS'; payload: { cards: [Card, PlayerId][] } }
+  | { type: 'DEALT_CARDS'; payload: { cards: CardMap } }
   | { type: 'REMOVE_CARDS' }
   | { type: 'PLAYER_HIT_DECK'; payload: { playerId: string; card: Card } }
   | {

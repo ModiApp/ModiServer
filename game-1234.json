@@ -1,0 +1,94 @@
+{
+  "initialState": {
+    "players": {
+      "1": {
+        "id": "1",
+        "lives": 3,
+        "card": null,
+        "move": null
+      },
+      "2": {
+        "id": "2",
+        "lives": 3,
+        "card": null,
+        "move": null
+      },
+      "3": {
+        "id": "3",
+        "lives": 3,
+        "card": null,
+        "move": null
+      },
+      "4": {
+        "id": "4",
+        "lives": 3,
+        "card": null,
+        "move": null
+      }
+    },
+    "version": 0,
+    "dealerId": null,
+    "orderedPlayerIds": [
+      "1",
+      "2",
+      "3",
+      "4"
+    ],
+    "activePlayerId": null
+  },
+  "changeActions": [
+    {
+      "type": "DEALT_CARDS",
+      "payload": {
+        "cards": [
+          [
+            {
+              "suit": "diamonds",
+              "rank": 13
+            },
+            "1"
+          ],
+          [
+            {
+              "suit": "diamonds",
+              "rank": 12
+            },
+            "2"
+          ],
+          [
+            {
+              "suit": "diamonds",
+              "rank": 11
+            },
+            "3"
+          ],
+          [
+            {
+              "suit": "diamonds",
+              "rank": 10
+            },
+            "4"
+          ]
+        ]
+      }
+    },
+    {
+      "type": "HIGHCARD_WINNERS",
+      "payload": {
+        "playerIds": [
+          "1"
+        ]
+      }
+    },
+    {
+      "type": "REMOVE_CARDS"
+    },
+    {
+      "type": "START_ROUND",
+      "payload": {
+        "dealerId": "1",
+        "activePlayerId": "2"
+      }
+    }
+  ]
+}
