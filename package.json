@@ -15,7 +15,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@modiapp/client": "^0.6.7",
+    "@modiapp/client": "^0.6.8",
     "express": "^4.17.1",
     "lodash": "^4.17.20",
     "socket.io": "^2.3.0",

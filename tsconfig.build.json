@@ -1,5 +1,8 @@
 {
   "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "types": ["@modi/client"],
+  },
   "include": ["./src/**/*", "**/*.d.ts"],
   "exclude": ["./test", "node_modules"]
 }

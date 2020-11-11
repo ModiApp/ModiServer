@@ -32,4 +32,8 @@ class Deck implements IDeck {
   }
 }
 
+export function createCardDeck() {
+  return new Deck();
+}
+
 export default Deck;

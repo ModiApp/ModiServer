@@ -1,6 +1,6 @@
 import fs from 'fs';
 import _ from 'lodash';
-import { groupSort, getNextAlivePlayerId } from './util';
+import { groupSort, getNextAlivePlayerId, uniqueId } from './util';
 
 export function createInitialGameState(playerIds: string[]): GameState {
   return {
@@ -9,7 +9,7 @@ export function createInitialGameState(playerIds: string[]): GameState {
         .map((id) => ({
           id,
           lives: 3,
-          card: null,
+          card: false,
           move: null,
         }))
         .map((player) => [player.id, player]),
@@ -47,7 +47,7 @@ export function reduceGameState(
     }
     case 'REMOVE_CARDS': {
       Object.values(newState.players).forEach((player) => {
-        player.card = null;
+        player.card = false;
       });
       return newState;
     }
@@ -68,7 +68,7 @@ export function createPersistedGameStateStore(
   gameId: string,
   initialState: GameState,
   onStateChange: StateChangeCallback,
-): GameStateStore {
+): ReturnType<typeof createGameStateStore> {
   const filepath = `./game-${gameId}.json`;
   fs.writeFileSync(
     filepath,
@@ -78,7 +78,8 @@ export function createPersistedGameStateStore(
     }),
     { encoding: 'utf-8' },
   );
-  return createGameStateStore(initialState, (changeAction, version) => {
+  const store = createGameStateStore(initialState);
+  store.addListener((changeAction, version) => {
     const content = JSON.parse(
       fs.readFileSync(filepath, { encoding: 'utf-8' }),
     );
@@ -91,23 +92,31 @@ export function createPersistedGameStateStore(
     );
     onStateChange(changeAction, version);
   });
+  return store;
 }
 
 function createGameStateStore(
   initialState: GameState,
-  onStateChange: StateChangeCallback,
-): GameStateStore {
-  const history: StateChangeAction[] = [];
+): StateStore<GameState, StateChangeAction> {
   let state = initialState;
+  const history: StateChangeAction[] = [];
+  const listeners: { [listenerId: string]: StateChangeCallback } = {};
   return {
     dispatch(action: StateChangeAction) {
       history.push(action);
       state = reduceGameState(state, action);
-      onStateChange(action, state.version);
+      Object.values(listeners).forEach((callback) =>
+        callback(action, state.version),
+      );
       return state;
     },
     getState() {
       return state;
+    },
+    addListener(callback: StateChangeCallback) {
+      const id = uniqueId(Object.keys(listeners));
+      listeners[id] = callback;
+      return id;
     },
     history,
     initialState,
@@ -115,7 +124,7 @@ function createGameStateStore(
 }
 
 function createModiGame(
-  store: GameStateStore,
+  store: StateStore<GameState, StateChangeAction>,
   deck: IDeck,
 ): ModiGameController {
   function playHighcard(withPlayerIds?: string[]): string {
@@ -127,10 +136,10 @@ function createModiGame(
       },
     });
     const rankedPlayers = groupSort(
-      Object.values(store.getState().players).filter((player) =>
-        playerIdsToDeal.includes(player.id),
+      Object.values(store.getState().players).filter(
+        (player) => typeof player.card === 'object',
       ),
-      (player) => player.card!.rank,
+      (player) => (player.card as Card).rank,
     );
 
     const winners = rankedPlayers[rankedPlayers.length - 1];
@@ -141,7 +150,7 @@ function createModiGame(
       payload: { playerIds: winnerIds },
     });
 
-    store.dispatch({ type: 'REMOVE_CARDS' });
+    store.dispatch({ type: 'REMOVE_CARDS', payload: {} });
 
     if (winners.length > 1) {
       return playHighcard(winnerIds);
@@ -164,6 +173,8 @@ function createModiGame(
           type: 'START_ROUND',
           payload: { dealerId, activePlayerId },
         });
+      } else {
+        throw new Error('Unauthorized');
       }
     },
     handleMove(playerId: string, move: PlayerMove) {
@@ -194,6 +205,11 @@ function createModiGame(
         }
       }
       return 'success';
+    },
+    authorizedPlayerIds: store.initialState.orderedPlayerIds,
+    addGameStateListener: store.addListener,
+    getActionHistory() {
+      return store.history.slice();
     },
   };
 }

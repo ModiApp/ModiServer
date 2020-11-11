@@ -13,7 +13,7 @@ describe('ModiGame Tests:', () => {
         expect(
           Object.values(initialState.players)
             .map((player) => player.card)
-            .every((card) => card === null),
+            .every((card) => card === false),
         ).toBe(true);
         expect(
           Object.values(initialState.players)
@@ -69,7 +69,10 @@ describe('ModiGame Tests:', () => {
         playersToDealTo,
         cardsToDeal,
       );
-      const stateAfter = reduceGameState(stateBefore, { type: 'REMOVE_CARDS' });
+      const stateAfter = reduceGameState(stateBefore, {
+        type: 'REMOVE_CARDS',
+        payload: {},
+      });
 
       expect(cardsOnTable(stateBefore)).toStrictEqual(cardsToDeal);
       expect(cardsOnTable(stateAfter)).toStrictEqual([]);
@@ -102,8 +105,8 @@ function createStateForRemoveCardsTests(
   };
 }
 
-function cardsOnTable(state: GameState): Card[] {
+function cardsOnTable(state: GameState): (Card | boolean)[] {
   return Object.values(state.players)
-    .filter((p) => p.card !== null)
+    .filter((p) => !!p.card)
     .map((p) => p.card!);
 }
