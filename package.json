@@ -2,9 +2,10 @@
   "name": "@modi/server",
   "version": "1.0.0",
   "description": "The lobby socket and game socket server for ModiGameClient",
-  "main": "index.js",
+  "main": "dist/index.js",
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
+    "prebuild": "rm -rf dist",
     "prestart": "yarn build",
     "start": "node dist/index.js",
     "test": "jest --verbose --watch-All --coverage",
@@ -15,7 +16,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@modiapp/client": "^0.6.8",
+    "@modiapp/client": "^0.7.0",
     "express": "^4.17.1",
     "lodash": "^4.17.20",
     "socket.io": "^2.3.0",

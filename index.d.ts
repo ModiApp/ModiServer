@@ -23,14 +23,7 @@ interface IDeck {
   popMany(n: number): Card[];
 }
 
-type ConnectionResponseDto = {
-  [playerId: string]: {
-    username: string;
-    connected: boolean;
-  };
-};
-type DealerRequestDto = { dealerId: string };
-type ConnectionOnArgs = ['disconnect', () => void] | ['start'];
+// type ConnectionOnArgs = ['disconnect', () => void] | ['start'];
 
 interface GameRoomConnection {
   onConnectionsChanged(connections: ConnectionResponseDto): any;

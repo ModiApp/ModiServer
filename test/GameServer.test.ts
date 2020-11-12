@@ -4,7 +4,7 @@ import {
   createInitialGameState,
 } from '../src/ModiGame';
 import { createCardDeck } from '../src/Deck';
-import { createGameServer } from '../src/GameRoomServer2';
+import { createGameServer } from '../src/GameRoomServer';
 
 const playerIds = ['1', '2', '3', '4'];
 
@@ -65,6 +65,8 @@ describe.only('GameRoomServer Tests:', () => {
       const conn = createMockConnection('Ikey', '1');
       gameRoomServer.handleConnection(conn);
       gameRoomServer.handleStartGameRequest(conn);
+
+      expect(conn.onGameStateChanged).toHaveBeenCalled();
     });
 
     test('players who are not first recieve errors for requesting start game', () => {
@@ -100,16 +102,8 @@ describe.only('GameRoomServer Tests:', () => {
         1,
       ];
       expect(ikey.onGameStateChanged).toHaveBeenNthCalledWith(...expectedArgs);
-      expect(pete.onGameStateChanged).toHaveBeenNthCalledWith(
-        1,
-        { type: 'DEALT_CARDS', payload: { cards: expectedDealtCards } },
-        1,
-      );
-      expect(jake.onGameStateChanged).toHaveBeenNthCalledWith(
-        1,
-        { type: 'DEALT_CARDS', payload: { cards: expectedDealtCards } },
-        1,
-      );
+      expect(pete.onGameStateChanged).toHaveBeenNthCalledWith(...expectedArgs);
+      expect(jake.onGameStateChanged).toHaveBeenNthCalledWith(...expectedArgs);
 
       expect(ikey.onGameStateChanged).toHaveBeenNthCalledWith(
         2,
