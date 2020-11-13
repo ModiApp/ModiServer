@@ -17,6 +17,7 @@ const playerIds = ['1', '2', '3', '4'];
 const gameStateStore = createGameStateStore(createInitialGameState(playerIds));
 const game = createModiGame(gameStateStore, createCardDeck());
 const gameRoomServer = createGameServer(game);
+
 io.of('/games/1234').on('connection', (socket) => {
   const connection = adaptSocketToConnection(socket);
   console.log('connection', JSON.stringify(connection, undefined, 2));

@@ -43,3 +43,21 @@ declare interface GameRoomServer {
     params: DealerRequestDto,
   ): void;
 }
+
+declare interface HistoryStore<T> {
+  /** Adds an element to the history store. Returns its index. */
+  push(el: T): number;
+
+  /** The inputted callback will be called whenever a new element gets added */
+  addListener(callback: HistoryListenerCallback): { remove(): void };
+
+  /** Returns a slice of the history array.
+   * @return an array of [T, index]
+   */
+  getSlice(start?: number, end?: number): [T, number][];
+
+  get(index: number): T;
+
+  length: number;
+}
+type HistoryListenerCallback<T> = (el: T, index: number) => any;

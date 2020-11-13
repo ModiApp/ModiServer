@@ -90,10 +90,10 @@ describe.only('GameRoomServer Tests:', () => {
       expect(ikey.onError).not.toHaveBeenCalled();
 
       const expectedDealtCards: TailoredCardMap = [
-        [{ rank: 13, suit: 'diamonds' }, '1'],
-        [{ rank: 12, suit: 'diamonds' }, '2'],
-        [{ rank: 11, suit: 'diamonds' }, '3'],
-        [{ rank: 10, suit: 'diamonds' }, '4'],
+        { rank: 13, suit: 'diamonds' },
+        { rank: 12, suit: 'diamonds' },
+        { rank: 11, suit: 'diamonds' },
+        { rank: 10, suit: 'diamonds' },
       ];
 
       const expectedArgs: [number, any, number] = [
@@ -154,7 +154,7 @@ function createMockConnection(
   return {
     username,
     playerId,
-    onConnectionsChanged: jest.fn(),
+    onConnectionsChanged: jest.fn() as (c: ConnectionResponseDto) => void,
     onGameStateChanged: jest.fn(),
     onError: jest.fn(),
   };
