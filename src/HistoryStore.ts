@@ -19,6 +19,7 @@ import { uniqueId } from './util';
 export function createHistoryStore<T>(): HistoryStore<T> {
   const elems: T[] = [];
   const listeners: { [id: string]: HistoryListenerCallback<T> } = {};
+
   return {
     push(el: T) {
       elems.push(el);
@@ -26,21 +27,23 @@ export function createHistoryStore<T>(): HistoryStore<T> {
       Object.values(listeners).forEach((callback) => callback(el, idx));
       return idx;
     },
+
     addListener(callback: HistoryListenerCallback<T>) {
       const id = uniqueId(Object.keys(listeners));
       listeners[id] = callback;
       return {
-        remove() {
-          delete listeners[id];
-        },
+        remove: () => delete listeners[id],
       };
     },
+
     getSlice(start?: number, end?: number) {
       return elems.slice(start, end).map((el, idx) => [el, idx + (start || 0)]);
     },
+
     get(index: number) {
       return elems[index];
     },
+
     get length() {
       return elems.length;
     },

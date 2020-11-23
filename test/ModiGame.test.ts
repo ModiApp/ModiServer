@@ -1,38 +1,99 @@
-import Deck from '../src/Deck';
-import { createInitialGameState } from '../src/ModiGame';
+import { createCardDeck } from '../src/Deck';
+import { createModiGame } from '../src/ModiGame';
 
-const mockIds = ['1', '2', '3', '4'];
-const cardDeck = new Deck();
+const mockPlayerIds = ['1', '2', '3', '4'];
 
 describe('ModiGame Tests:', () => {
-  describe('createModiGame() tests', () => {});
-});
+  describe('createModiGame() tests', () => {
+    const game = createModiGame(mockPlayerIds, createCardDeck());
+    const listener = jest.fn();
 
-function createStateForRemoveCardsTests(
-  playerIds: string[],
-  cardsToDeal: Card[],
-): GameState {
-  return {
-    version: 1,
-    orderedPlayerIds: [...playerIds],
-    players: Object.fromEntries(
-      playerIds.map((id, idx) => [
-        id,
+    game.addGameStateListener(listener);
+    test('can initiate highcard', () => {
+      game.initiateHighcard();
+
+      const expectedDealtCards: TailoredCardMap = [
+        { rank: 13, suit: 'diamonds' },
+        { rank: 12, suit: 'diamonds' },
+        { rank: 11, suit: 'diamonds' },
+        { rank: 10, suit: 'diamonds' },
+      ];
+      expect(listener).toHaveBeenNthCalledWith(
+        1,
         {
-          id,
-          lives: 3,
-          card: cardsToDeal[idx],
-          move: null,
+          type: 'PLAYERS_TURN',
+          payload: { playerId: '1', controls: 'Start Highcard' },
         },
-      ]),
-    ),
-    dealerId: null,
-    activePlayerId: null,
-  };
-}
+        0,
+      );
+      expect(listener).toHaveBeenNthCalledWith(
+        2,
+        {
+          type: 'DEALT_CARDS',
+          payload: { dealerId: '1', cards: expectedDealtCards },
+        },
+        1,
+      );
+      expect(listener).toHaveBeenNthCalledWith(
+        3,
+        { type: 'HIGHCARD_WINNERS', payload: { playerIds: ['1'] } },
+        2,
+      );
 
-function cardsOnTable(state: GameState): (Card | boolean)[] {
-  return Object.values(state.players)
-    .filter((p) => !!p.card)
-    .map((p) => p.card!);
-}
+      expect(listener).toHaveBeenNthCalledWith(
+        4,
+        { type: 'REMOVE_CARDS', payload: {} },
+        3,
+      );
+
+      expect(listener).toHaveBeenNthCalledWith(
+        5,
+        {
+          type: 'PLAYERS_TURN',
+          payload: { playerId: '1', controls: 'Choose Dealer' },
+        },
+        4,
+      );
+    });
+
+    test('winner of highcard can choose the dealer', () => {
+      game.setDealerId('1', '3');
+
+      expect(listener).toHaveBeenNthCalledWith(
+        6,
+        {
+          type: 'PLAYERS_TURN',
+          payload: { playerId: '3', controls: 'Deal Cards' },
+        },
+        5,
+      );
+    });
+
+    test('dealer can deal cards', () => {
+      const expectedDealtCards: TailoredCardMap = [
+        { rank: 9, suit: 'diamonds' },
+        { rank: 8, suit: 'diamonds' },
+        { rank: 7, suit: 'diamonds' },
+        { rank: 6, suit: 'diamonds' },
+      ];
+      game.dealCards('3');
+      expect(listener).toHaveBeenNthCalledWith(
+        7,
+        {
+          type: 'DEALT_CARDS',
+          payload: { dealerId: '3', cards: expectedDealtCards },
+        },
+        6,
+      );
+
+      expect(listener).toHaveBeenNthCalledWith(
+        8,
+        {
+          type: 'PLAYERS_TURN',
+          payload: { playerId: '2', controls: 'Stick/Swap' },
+        },
+        7,
+      );
+    });
+  });
+});

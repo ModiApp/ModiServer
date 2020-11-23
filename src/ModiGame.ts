@@ -1,19 +1,18 @@
-import fs from 'fs';
-import _ from 'lodash';
 import { createHistoryStore } from './HistoryStore';
-import { groupSort, getNextAlivePlayerId, uniqueId } from './util';
+import { groupSort, getNextAlivePlayerId } from './util';
 
 export function createInitialGameState(playerIds: string[]): GameState {
   return {
     players: Object.fromEntries(
-      playerIds
-        .map((id) => ({
+      playerIds.map((id) => [
+        id,
+        {
           id,
           lives: 3,
           card: false,
           move: null,
-        }))
-        .map((player) => [player.id, player]),
+        },
+      ]),
     ),
     version: 0,
     dealerId: null,
@@ -22,90 +21,30 @@ export function createInitialGameState(playerIds: string[]): GameState {
   };
 }
 
-// export function reduceGameState(
-//   state: GameState,
-//   action: StateChangeAction,
-// ): GameState {
-//   const newState = { ..._.cloneDeep(state), version: state.version + 1 };
-//   switch (action.type) {
-//     case 'DEALT_CARDS': {
-//       const { cards } = action.payload;
-//       return {
-//         ...newState,
-//         players: {
-//           ...newState.players,
-//           ...Object.fromEntries(
-//             cards.map(([card, playerId]) => [
-//               playerId,
-//               {
-//                 ...newState.players[playerId],
-//                 card,
-//               },
-//             ]),
-//           ),
-//         },
-//       };
-//     }
-//     case 'REMOVE_CARDS': {
-//       Object.values(newState.players).forEach((player) => {
-//         player.card = false;
-//       });
-//       return newState;
-//     }
-//     case 'PLAYERS_TRADED': {
-//       const { fromPlayerId, toPlayerId } = action.payload;
-//       const fromPlayer = newState.players[fromPlayerId];
-//       const toPlayer = newState.players[toPlayerId];
-//       const fromPlayersCard = fromPlayer.card;
-//       fromPlayer.card = toPlayer.card;
-//       toPlayer.card = fromPlayersCard;
-//       return newState;
-//     }
-//   }
-//   return newState;
-// }
-
-export function createPersistedGameStateStore(
-  gameId: string,
-  initialState: GameState,
-  onStateChange: StateChangeCallback,
-): ReturnType<typeof createGameStateStore> {
-  const filepath = `./game-${gameId}.json`;
-  fs.writeFileSync(
-    filepath,
-    JSON.stringify({
-      initialState,
-      changeActions: [],
-    }),
-    { encoding: 'utf-8' },
-  );
-  const store = createGameStateStore(initialState);
-  store.addListener((changeAction, version) => {
-    const content = JSON.parse(
-      fs.readFileSync(filepath, { encoding: 'utf-8' }),
-    );
-    fs.writeFileSync(
-      filepath,
-      JSON.stringify({
-        ...content,
-        changeActions: [...content.changeActions, changeAction],
-      }),
-    );
-    onStateChange(changeAction, version);
-  });
-  return store;
-}
-
-function createModiGame(playerIds: string[], deck: IDeck): ModiGameController {
+export function createModiGame(
+  playerIds: string[],
+  deck: IDeck,
+): ModiGameController {
   const state = createInitialGameState(playerIds);
   const actionHistoryStore = createHistoryStore<StateChangeAction>();
 
+  actionHistoryStore.push({
+    type: 'PLAYERS_TURN',
+    payload: { playerId: playerIds[0], controls: 'Start Highcard' },
+  });
+
   function playHighcard(withPlayerIds?: string[]): string {
     const playerIdsToDeal = withPlayerIds || state.orderedPlayerIds;
+    const cardsToDeal = playerIdsToDeal.map((playerId) => {
+      const card = deck.pop();
+      state.players[playerId].card = card;
+      return card;
+    });
     actionHistoryStore.push({
       type: 'DEALT_CARDS',
       payload: {
-        cards: playerIdsToDeal.map((playerId) => deck.pop()),
+        cards: cardsToDeal,
+        dealerId: playerIdsToDeal[0],
       },
     });
     const rankedPlayers = groupSort(
@@ -129,27 +68,63 @@ function createModiGame(playerIds: string[], deck: IDeck): ModiGameController {
       return playHighcard(winnerIds);
     }
 
+    const winnerId = winners[0].id;
+
+    actionHistoryStore.push({
+      type: 'PLAYERS_TURN',
+      payload: { playerId: winnerId, controls: 'Choose Dealer' },
+    });
+
     return winners[0].id;
   }
 
+  function getAlivePlayerIds() {
+    return Object.entries(state.players)
+      .filter(([playerId, player]) => player.lives > 0)
+      .map(([playerId]) => playerId);
+  }
+
   return {
-    start: playHighcard,
-    setDealerId(dealerId: string, playerId: string) {
-      const lastAction = store.history[store.history.length - 2];
+    initiateHighcard: playHighcard,
+    setDealerId(playerId: string, dealerId: string) {
+      const lastAction = actionHistoryStore.get(actionHistoryStore.length - 1);
       if (
-        lastAction.type === 'HIGHCARD_WINNERS' &&
-        lastAction.payload.playerIds.length === 1 &&
-        lastAction.payload.playerIds[0] === playerId
+        lastAction.type === 'PLAYERS_TURN' &&
+        lastAction.payload.controls === 'Choose Dealer' &&
+        lastAction.payload.playerId === playerId
       ) {
         const activePlayerId = getNextAlivePlayerId(state, dealerId);
         actionHistoryStore.push({
-          type: 'START_ROUND',
-          payload: { dealerId, activePlayerId },
+          type: 'PLAYERS_TURN',
+          payload: { playerId: dealerId, controls: 'Deal Cards' },
         });
       } else {
         throw new Error('Unauthorized');
       }
     },
+
+    dealCards(dealerId: string, toPlayerIds?: string[]) {
+      const lastAction = actionHistoryStore.get(actionHistoryStore.length - 1);
+      if (
+        lastAction.type === 'PLAYERS_TURN' &&
+        lastAction.payload.controls === 'Deal Cards' &&
+        lastAction.payload.playerId === dealerId
+      ) {
+        const playerIdsToDeal = toPlayerIds || getAlivePlayerIds();
+        const cards = playerIdsToDeal.map(() => deck.pop());
+        actionHistoryStore.push({
+          type: 'DEALT_CARDS',
+          payload: { dealerId, cards },
+        });
+        actionHistoryStore.push({
+          type: 'PLAYERS_TURN',
+          payload: { playerId: '2', controls: 'Stick/Swap' },
+        });
+      } else {
+        throw new Error('Unauthorized');
+      }
+    },
+
     handleMove(playerId: string, move: PlayerMove) {
       const currentState = state;
       if (currentState.activePlayerId !== playerId) {
@@ -179,12 +154,17 @@ function createModiGame(playerIds: string[], deck: IDeck): ModiGameController {
       }
       return 'success';
     },
-    authorizedPlayerIds: store.initialState.orderedPlayerIds,
-    addGameStateListener: actionHistoryStore.addListener,
+    authorizedPlayerIds: state.orderedPlayerIds,
+    addGameStateListener(cb: StateChangeCallback, fromVersion = 0) {
+      if (fromVersion < actionHistoryStore.length) {
+        actionHistoryStore
+          .getSlice(fromVersion)
+          .forEach(([event, version]) => cb(event, version));
+      }
+      return actionHistoryStore.addListener(cb);
+    },
     getActionHistory() {
-      return store.history.slice();
+      return actionHistoryStore.getSlice();
     },
   };
 }
-
-export { createGameStateStore, createModiGame };

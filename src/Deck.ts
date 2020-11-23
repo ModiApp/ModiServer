@@ -9,7 +9,9 @@ class Deck implements IDeck {
       ranks.forEach((rank) => this.cards.push({ suit, rank })),
     );
   }
-  shuffle() {}
+  shuffle() {
+    return this.cards;
+  }
   pop() {
     if (this.cards.length === 0) {
       this.reloadFromTrash();

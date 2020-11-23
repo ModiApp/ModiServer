@@ -1,8 +1,4 @@
-import {
-  createModiGame,
-  createGameStateStore,
-  createInitialGameState,
-} from '../src/ModiGame';
+import { createModiGame } from '../src/ModiGame';
 import { createCardDeck } from '../src/Deck';
 import { createGameServer } from '../src/GameRoomServer';
 
@@ -10,14 +6,12 @@ const playerIds = ['1', '2', '3', '4'];
 
 const AUTH_ERR_MSG = 'Authorization Error: Access token denied';
 
-describe.only('GameRoomServer Tests:', () => {
-  let gameStateStore = createGameStateStore(createInitialGameState(playerIds));
-  let game = createModiGame(gameStateStore, createCardDeck());
+describe('GameRoomServer Tests:', () => {
+  let game = createModiGame(playerIds, createCardDeck());
   let gameRoomServer = createGameServer(game);
 
   beforeEach(() => {
-    gameStateStore = createGameStateStore(createInitialGameState(playerIds));
-    game = createModiGame(gameStateStore, createCardDeck());
+    game = createModiGame(playerIds, createCardDeck());
     gameRoomServer = createGameServer(game);
   });
 
@@ -26,12 +20,12 @@ describe.only('GameRoomServer Tests:', () => {
       const mockConnection = createMockConnection('Ikey', '1');
       gameRoomServer.handleConnection(mockConnection);
 
-      expect(mockConnection.onConnectionsChanged).toBeCalledWith({
-        '1': { username: 'Ikey', connected: true },
-        '2': { username: '', connected: false },
-        '3': { username: '', connected: false },
-        '4': { username: '', connected: false },
-      });
+      expect(mockConnection.onConnectionsChanged).toBeCalledWith([
+        { username: 'Ikey', connected: true, playerId: '1' },
+        { username: '', connected: false, playerId: '2' },
+        { username: '', connected: false, playerId: '3' },
+        { username: '', connected: false, playerId: '4' },
+      ]);
     });
 
     test('usernames are persisted for disconnected players', () => {
@@ -43,12 +37,12 @@ describe.only('GameRoomServer Tests:', () => {
       gameRoomServer.handleDisconnection(conn1.playerId);
 
       expect(conn2.onConnectionsChanged).toHaveBeenCalledTimes(2);
-      expect(conn2.onConnectionsChanged).toBeCalledWith({
-        '1': { username: 'Ikey', connected: false },
-        '2': { username: 'Pete', connected: true },
-        '3': { username: '', connected: false },
-        '4': { username: '', connected: false },
-      });
+      expect(conn2.onConnectionsChanged).toBeCalledWith([
+        { username: 'Ikey', connected: false, playerId: '1' },
+        { username: 'Pete', connected: true, playerId: '2' },
+        { username: '', connected: false, playerId: '3' },
+        { username: '', connected: false, playerId: '4' },
+      ]);
     });
 
     test('unauthorized connections recieve proper error message', () => {
@@ -64,9 +58,14 @@ describe.only('GameRoomServer Tests:', () => {
     test('first player is allowed to make a start game request', () => {
       const conn = createMockConnection('Ikey', '1');
       gameRoomServer.handleConnection(conn);
-      gameRoomServer.handleStartGameRequest(conn);
-
-      expect(conn.onGameStateChanged).toHaveBeenCalled();
+      expect(conn.onGameStateChanged).toHaveBeenNthCalledWith(
+        1,
+        {
+          type: 'PLAYERS_TURN',
+          payload: { playerId: '1', controls: 'Start Highcard' },
+        },
+        0,
+      );
     });
 
     test('players who are not first recieve errors for requesting start game', () => {
@@ -74,49 +73,11 @@ describe.only('GameRoomServer Tests:', () => {
       gameRoomServer.handleConnection(conn);
       gameRoomServer.handleStartGameRequest(conn);
 
-      expect(conn.onError).toHaveBeenLastCalledWith(AUTH_ERR_MSG);
-    });
-
-    test('all connections receive correct state change alerts for highcard', () => {
-      const ikey = createMockConnection('Ikey', '1');
-      const pete = createMockConnection('Pete', '2');
-      const jake = createMockConnection('Jake', '3');
-
-      [ikey, pete, jake].forEach((conn) =>
-        gameRoomServer.handleConnection(conn),
-      );
-      gameRoomServer.handleStartGameRequest(ikey);
-
-      expect(ikey.onError).not.toHaveBeenCalled();
-
-      const expectedDealtCards: TailoredCardMap = [
-        { rank: 13, suit: 'diamonds' },
-        { rank: 12, suit: 'diamonds' },
-        { rank: 11, suit: 'diamonds' },
-        { rank: 10, suit: 'diamonds' },
-      ];
-
-      const expectedArgs: [number, any, number] = [
-        1,
-        { type: 'DEALT_CARDS', payload: { cards: expectedDealtCards } },
-        1,
-      ];
-      expect(ikey.onGameStateChanged).toHaveBeenNthCalledWith(...expectedArgs);
-      expect(pete.onGameStateChanged).toHaveBeenNthCalledWith(...expectedArgs);
-      expect(jake.onGameStateChanged).toHaveBeenNthCalledWith(...expectedArgs);
-
-      expect(ikey.onGameStateChanged).toHaveBeenNthCalledWith(
-        2,
-        { type: 'HIGHCARD_WINNERS', payload: { playerIds: ['1'] } },
-        2,
-      );
-
-      expect(ikey.onGameStateChanged).toHaveBeenNthCalledWith(
-        3,
-        { type: 'REMOVE_CARDS', payload: {} },
-        3,
+      expect(conn.onError).toHaveBeenLastCalledWith(
+        'Only game admin can start the game',
       );
     });
+
     test('winner of highcard can request to choose the dealer', () => {
       const ikey = createMockConnection('Ikey', '1');
       const pete = createMockConnection('Pete', '2');
@@ -145,6 +106,19 @@ describe.only('GameRoomServer Tests:', () => {
       expect(pete.onError).toHaveBeenCalledWith('Unauthorized');
     });
   });
+
+  describe('Allows connections to subscribe to state changes from past versions', () => {
+    test('when player connects after game starts, they recieve past game events in order', () => {
+      const firstPlayer = createMockConnection('Ikey', '1');
+      const secondPlayer = createMockConnection('Pete', '2');
+      gameRoomServer.handleConnection(firstPlayer);
+      gameRoomServer.handleStartGameRequest(firstPlayer);
+
+      gameRoomServer.handleConnection(secondPlayer);
+
+      expect(secondPlayer.onGameStateChanged).toHaveNthReturnedWith(1, 0);
+    });
+  });
 });
 
 function createMockConnection(
@@ -155,7 +129,7 @@ function createMockConnection(
     username,
     playerId,
     onConnectionsChanged: jest.fn() as (c: ConnectionResponseDto) => void,
-    onGameStateChanged: jest.fn(),
+    onGameStateChanged: jest.fn((action, version) => version),
     onError: jest.fn(),
   };
 }

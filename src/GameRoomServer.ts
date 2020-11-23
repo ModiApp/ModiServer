@@ -7,11 +7,14 @@
  *   1c. Alert all connections when connections change
  *   1d. Only allow players who's playerIds are authorized
  *
- * 2. Keep track of gamestate
- *   2a. Record the order of playerIds as they were passed in
- *   2b. Allow players to initiate highcard
- *   2d. Allow players to make moves
+ * 2. Communicate game events to all connected clients
+ *   2a. Allow players to initiate highcard
+ *   2b. Allow players to make moves
  *   2c. Alert all connections when gamestate changes
+ *   2d. Tailor game events on a per client basis:
+ *      For example: Let's say
+ *
+ * The frontend is going to recieve
  *
  */
 
@@ -19,6 +22,7 @@ class ModiGameServer implements GameRoomServer {
   private game: ModiGameController;
   private connected: { [playerId: string]: GameRoomConnection | null };
   private usernames: { [playerId: string]: string };
+  private didStart = false;
 
   constructor(game: ModiGameController) {
     this.game = game;
@@ -34,8 +38,9 @@ class ModiGameServer implements GameRoomServer {
     });
   }
 
-  handleConnection(connection: GameRoomConnection) {
+  handleConnection(connection: GameRoomConnection, lastRecievedEvtVersion = 0) {
     if (this.isAuthorizedPlayerId(connection.playerId)) {
+      this.sendPastGameEvents(connection, lastRecievedEvtVersion);
       this.connected[connection.playerId] = connection;
       this.usernames[connection.playerId] = connection.username;
       this.emitConnections();
@@ -45,10 +50,23 @@ class ModiGameServer implements GameRoomServer {
   }
 
   handleStartGameRequest(connection: GameRoomConnection) {
+    if (this.didStart) {
+      return connection.onError('Game already started');
+    }
+
     if (this.game.authorizedPlayerIds[0] === connection.playerId) {
-      this.game.start();
+      this.game.initiateHighcard();
     } else {
-      connection.onError('Authorization Error: Access token denied');
+      connection.onError('Only game admin can start the game');
+    }
+  }
+
+  handleDealCardsRequest(connection: GameRoomConnection) {
+    if (!this.didStart) {
+      this.handleStartGameRequest(connection);
+      this.didStart = true;
+    } else {
+      this.game.dealCards(connection.playerId);
     }
   }
 
@@ -57,7 +75,7 @@ class ModiGameServer implements GameRoomServer {
     params: DealerRequestDto,
   ) {
     try {
-      this.game.setDealerId(params.dealerId, connection.playerId);
+      this.game.setDealerId(connection.playerId, params.dealerId);
     } catch (e) {
       connection.onError(e.message);
     }
@@ -70,16 +88,29 @@ class ModiGameServer implements GameRoomServer {
     this.emitConnections();
   }
 
+  private sendPastGameEvents(
+    connection: GameRoomConnection,
+    fromVersion: number,
+  ) {
+    this.game
+      .getActionHistory()
+      .slice(fromVersion)
+      .forEach(([gameEvent, version]) => {
+        connection.onGameStateChanged(gameEvent, version);
+      });
+  }
+
   private emitConnections() {
-    const connections: ConnectionResponseDto = Object.fromEntries(
-      Object.entries(this.connected).map(([playerId, conn]) => [
-        playerId,
-        { username: this.usernames[playerId], connected: !!conn },
-      ]),
-    );
+    const connections: ConnectionResponseDto = Object.entries(
+      this.connected,
+    ).map(([playerId, connection]) => ({
+      username: this.usernames[playerId],
+      connected: !!connection,
+      playerId,
+    }));
     Object.values(this.connected)
       .filter((conn) => !!conn)
-      .forEach((conn) => conn?.onConnectionsChanged(connections));
+      .forEach((conn) => conn!.onConnectionsChanged(connections));
   }
 
   private isAuthorizedPlayerId(playerId: string) {

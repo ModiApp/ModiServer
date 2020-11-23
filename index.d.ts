@@ -7,18 +7,19 @@ declare interface StateStore<State, Action> {
 }
 
 declare interface ModiGameController {
-  start();
+  initiateHighcard(): void;
+  dealCards(playerId: string, toPlayerIds?: string[]): void;
   handleMove(playerId: string, move: PlayerMove): 'success' | 'failed';
-  setDealerId(dealerId: string, playerId);
-  addGameStateListener(cb: StateChangeCallback): string;
-  getActionHistory(): StateChangeAction[];
+  setDealerId(playerId: string, dealerId: string): void;
+  addGameStateListener(cb: StateChangeCallback): { remove: () => void };
+  getActionHistory(): [StateChangeAction, number][];
   authorizedPlayerIds: string[];
 }
 
 interface IDeck {
   cards: Card[];
   trash: Card[];
-  shuffle();
+  shuffle(): Card[];
   pop(): Card;
   popMany(n: number): Card[];
 }
@@ -49,7 +50,7 @@ declare interface HistoryStore<T> {
   push(el: T): number;
 
   /** The inputted callback will be called whenever a new element gets added */
-  addListener(callback: HistoryListenerCallback): { remove(): void };
+  addListener(callback: HistoryListenerCallback<T>): { remove(): void };
 
   /** Returns a slice of the history array.
    * @return an array of [T, index]
