@@ -21,7 +21,7 @@
     "eslint-config-google": "^0.14.0",
     "express": "^4.17.1",
     "jest": "^25.2.3",
-    "lodash": "^4.17.20",
+    "lodash": "^4.17.21",
     "property-watch-decorator": "^1.2.5",
     "redux": "^4.0.5",
     "socket.io": "^2.3.0",
