@@ -19,7 +19,7 @@
     "@types/node": "^13.11.0",
     "@types/socket.io": "^2.1.4",
     "eslint-config-google": "^0.14.0",
-    "express": "^4.17.1",
+    "express": "^4.17.3",
     "jest": "^25.2.3",
     "lodash": "^4.17.20",
     "property-watch-decorator": "^1.2.5",
